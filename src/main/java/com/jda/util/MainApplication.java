@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
  * Created by Valued Customer on 7/20/2017.
  */
 public class MainApplication extends ListenerAdapter {
+    private DiscordReadUtil discUtil = new DiscordReadUtil();
 
     public static void main(String[] args)
             throws LoginException, RateLimitedException, InterruptedException {
@@ -43,16 +44,20 @@ public class MainApplication extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        String publicMessage = String.format("[" + getDate() + "][" + getTime() + "]" +
+                        "[Chan: %s] %s: %s\n",
+                event.getTextChannel().getName(),
+                event.getMember().getEffectiveName(),
+                event.getMessage().getContent());
+        String privateMessage = String.format("[PM] %s: %s\n", event.getAuthor().getName(),
+                event.getMessage().getContent());
         if (event.isFromType(ChannelType.PRIVATE)) {
-            System.out.printf("[PM] %s: %s\n", event.getAuthor().getName(),
-                    event.getMessage().getContent());
+            System.out.printf(privateMessage);
         }
         else {
-            System.out.printf("[" + getDate() + "][" + getTime() + "]" +
-                            "[Chan: %s] %s: %s\n",
-                    event.getTextChannel().getName(),
-                    event.getMember().getEffectiveName(),
-                    event.getMessage().getContent());
+            System.out.printf(publicMessage);
         }
+        discUtil.getPublicData(event, publicMessage);
+        System.out.println(discUtil.userMap.toString());
     }
 }
