@@ -1,5 +1,6 @@
 package com.jda.main;
 
+import com.jda.util.DataUtil;
 import com.jda.util.DiscordReadUtil;
 import com.jda.util.MessageUtil;
 import net.dv8tion.jda.core.AccountType;
@@ -11,20 +12,45 @@ import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 import javax.security.auth.login.LoginException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOError;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
+
+import org.apache.commons.io.FileUtils;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Created by Valued Customer on 7/20/2017.
  */
 public class MainApplication extends ListenerAdapter {
     private DiscordReadUtil discUtil = new DiscordReadUtil();
+    private DataUtil dataUtil;
 
     public static void main(String[] args)
             throws LoginException, RateLimitedException, InterruptedException {
+        /* Get the credentials file. */
+        if (args[0] == null) {
+            System.out.println("No filename supplied. Error.");
+        }
+        DataUtil dataUtil = new DataUtil();
+        Map<String, Object> creds = dataUtil.retrieveCreds(args[0]);
+        dataUtil.setCreds(creds);
+        /* Create the bot and add the listeners for the bot. */
+        String token = (String) creds.get("token");
         JDA jda = new JDABuilder(AccountType.BOT)
-                .setToken("MzM3NjI3MzEyODMwOTM5MTM2.DFJo8w.2LTfEowEWZtAGN7A7QvzXeNibf8")
+                .setToken(token)
                 .buildBlocking();
-        jda.addEventListener(new MainApplication());
+        jda.addEventListener(new MainApplication(dataUtil));
     }
+
+    public MainApplication(DataUtil dataUtil) {
+        this.dataUtil = dataUtil;
+    }
+
 
     /**
      * Get the current message based on the !curr event.
@@ -68,9 +94,10 @@ public class MainApplication extends ListenerAdapter {
         if (msgContent.equals("!test")) {
             /* Test if reaction word is created. */
             event.getMessage().addReaction("\uD83D\uDE02").queue();
-        } else if (msgContent.equals("!get")) {
+        } else if (msgContent.startsWith("!get") &&
+                MessageUtil.getCheckIfValidDate(msgContent)) {
             /* Get Message History from channel. */
-            discUtil.getDailyHistory(jda.getTextChannelById("247929469552033792"));
+            discUtil.getDailyHistory(event.getTextChannel(), msgContent);
             /* Get current message from channel. */
         } else if (msgContent.equals("!curr")) {
             getCurrMessage(event);

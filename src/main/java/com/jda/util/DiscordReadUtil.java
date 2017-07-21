@@ -4,6 +4,7 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +32,61 @@ public class DiscordReadUtil {
         }
     }
 
+    public boolean inSameDay(Message msg, int day) {
+        OffsetDateTime msgDate = msg.getCreationTime().minusHours(4);
+        return msgDate.getDayOfMonth() == day;
+    }
+
+    /**
+     * Get the first batch of messages that correspond to the specified day.
+     * @param day - the given day.
+     * @param msgChan - the specified message channel.
+     * @return The first batch of messages to iterate over.
+     */
+    public List<Message> getFirstMessagesBySpecifiedDay(int day, MessageChannel msgChan) {
+        List<Message> messageList = getMessages(msgChan);
+        Message firstMsg = messageList.get(0);
+        if (firstMsg.getCreationTime().getDayOfMonth() < day) {
+            System.out.println("Specified day is later than the most recent message. Error.");
+            return null;
+        } else if (messageList.isEmpty()) {
+            System.out.println("No history available in channel.");
+            return messageList;
+        }
+        Message currMsg = messageList.get(messageList.size() - 1);
+        if (!inSameDay(currMsg, day)) {
+            getFirstMessagesBySpecifiedDay(day, msgChan);
+        }
+        return messageList;
+    }
+
+
+    public void iterateMessagesBySpecifiedDay(int day, MessageChannel msgChan,
+                                              List<Message> messageList) {
+        for (Message msg : messageList) {
+            if (inSameDay(msg, day)) {
+                System.out.println(MessageUtil.timeStamp(msg) + MessageUtil.userMsg(msg));
+            }
+        }
+    }
+
     /**
      * Gets the history for the channel, between the interval 00:00:00 to 23:59:59 of the
      * same day. TESTED on #treehouse momentarily.
      * @param{event} - the event that is called upon for the history.
      * @param{timeStamp} - the time stamp of the user.
      */
-    public void getDailyHistory(MessageChannel msgChan) {
-        for (Message msg : getMessages(msgChan)) {
-            System.out.println(MessageUtil.timeStamp(msg) + MessageUtil.userMsg(msg));
+    public void getDailyHistory(MessageChannel msgChan, String currMsg) {
+        currMsg = currMsg.replace("!get ", "");
+        String[] listStrings = currMsg.split("/");
+        int[] dateValues = MessageUtil.parseDate(listStrings);
+        List<Message> messageList = getFirstMessagesBySpecifiedDay(dateValues[1], msgChan);
+        if (messageList == null) {
+            return;
+        } else if (messageList.isEmpty()) {
+            return;
         }
+        iterateMessagesBySpecifiedDay(dateValues[1], msgChan, messageList);
     }
 
     /**
