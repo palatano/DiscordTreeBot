@@ -2,6 +2,7 @@ package com.jda.util;
 
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 import java.time.OffsetDateTime;
@@ -15,9 +16,11 @@ import java.util.stream.Collectors;
  */
 public class DiscordReadUtil {
     Map<String, String> userMap;
+    DataUtil dataUtil;
 
     public DiscordReadUtil() {
         userMap = new HashMap<>();
+        dataUtil = new DataUtil();
     }
 
     /**
@@ -40,33 +43,47 @@ public class DiscordReadUtil {
     /**
      * Get the first batch of messages that correspond to the specified day.
      * @param day - the given day.
-     * @param msgChan - the specified message channel.
+     * @param msgHistory - the specified message channel.
      * @return The first batch of messages to iterate over.
      */
-    public List<Message> getFirstMessagesBySpecifiedDay(int day, MessageChannel msgChan) {
-        List<Message> messageList = getMessages(msgChan);
+    public List<Message> getFirstMessagesBySpecifiedDay(int day, MessageHistory msgHistory) {
+        // Get the message history, if it exists.
+        List<Message> messageList = getMessages(msgHistory);
+        if (messageList.isEmpty()) {
+            System.out.println("No history available in channel.");
+            return messageList;
+        }
+        // Make sure the specified date is not later than today.
         Message firstMsg = messageList.get(0);
         if (firstMsg.getCreationTime().getDayOfMonth() < day) {
             System.out.println("Specified day is later than the most recent message. Error.");
             return null;
-        } else if (messageList.isEmpty()) {
-            System.out.println("No history available in channel.");
-            return messageList;
         }
+        // Attempt to find the messages until it matches the day.
         Message currMsg = messageList.get(messageList.size() - 1);
-        if (!inSameDay(currMsg, day)) {
-            getFirstMessagesBySpecifiedDay(day, msgChan);
+        while (currMsg.getCreationTime().getDayOfMonth() > day) {
+            messageList = getMessages(msgHistory);
+            currMsg = messageList.get(messageList.size() - 1);
         }
         return messageList;
     }
 
 
-    public void iterateMessagesBySpecifiedDay(int day, MessageChannel msgChan,
+    public void iterateMessagesBySpecifiedDay(int day, MessageHistory msgHistory,
                                               List<Message> messageList) {
+        // Print out the messages.
+        MessageChannel msgChan = msgHistory.getChannel();
         for (Message msg : messageList) {
             if (inSameDay(msg, day)) {
                 System.out.println(MessageUtil.timeStamp(msg) + MessageUtil.userMsg(msg));
+                dataUtil.putUniqueUser(msg, msgChan);
             }
+        }
+        Message lastMsg = messageList.get(messageList.size() - 1);
+        if (!inSameDay(lastMsg, day)) {
+            return;
+        } else {
+            iterateMessagesBySpecifiedDay(day, msgHistory, getMessages(msgHistory));
         }
     }
 
@@ -80,24 +97,27 @@ public class DiscordReadUtil {
         currMsg = currMsg.replace("!get ", "");
         String[] listStrings = currMsg.split("/");
         int[] dateValues = MessageUtil.parseDate(listStrings);
-        List<Message> messageList = getFirstMessagesBySpecifiedDay(dateValues[1], msgChan);
+        dataUtil.createMap();
+        MessageHistory msgHistory = new MessageHistory(msgChan);
+        List<Message> messageList = getFirstMessagesBySpecifiedDay(dateValues[1], msgHistory);
+        // If no history or specified is later than today, return.
         if (messageList == null) {
             return;
         } else if (messageList.isEmpty()) {
             return;
         }
-        iterateMessagesBySpecifiedDay(dateValues[1], msgChan, messageList);
+        iterateMessagesBySpecifiedDay(dateValues[1], msgHistory, messageList);
+        dataUtil.putUniqueUserMap(msgChan.getName());
+        dataUtil.writeChannelDataYaml();
     }
 
     /**
      * Get the messages from a specified channel.
-     * @param channel - desired text channel.
+     * @param msgHistory - desired text channel.
      * @return list of messages.
      */
-    public List<Message> getMessages(MessageChannel channel) {
-        return channel.getIterableHistory().stream()
-                .limit(100)
-                .collect(Collectors.toList());
+    public List<Message> getMessages(MessageHistory msgHistory) {
+        return msgHistory.retrievePast(100).complete();
     }
 
 }

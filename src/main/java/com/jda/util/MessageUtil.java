@@ -11,17 +11,43 @@ import java.util.List;
 public class MessageUtil {
 
     /**
+     * Comparator method for time stamps.
+     * @return 1 - timeStampOne earlier than timeStampTwo, 0 - equal,
+     *         -1 - timeStampOne later than timeStampTwo.
+     */
+    public static int compareTimeStamp(String timeStampOne, String timeStampTwo) {
+        int timeStampOneTime = parseTimeToSeconds(timeStampOne);
+        int timeStampTwoTime = parseTimeToSeconds(timeStampTwo);
+        return Integer.compare(timeStampOneTime, timeStampTwoTime);
+    }
+
+    /**
      * Get the time (EST).
      * @return formatted time string.
      */
     private static String getTime(Message message) {
+        String zone;
         OffsetDateTime time = message.getCreationTime().minusHours(4);
-        int hour = time.getHour() > 12 ? time.getHour() % 12 : time.getHour();
+        int hour = time.getHour();
+        // Case 1. 24:00:00 or 00:00:00 -> 12 AM
+        if (hour == 0) {
+            hour += 12;
+            zone = "AM";
+        } else if (hour < 12) {
+            // Case 2. 1:00:00 -> 1 AM
+            zone = "AM";
+        } else if (hour == 12) {
+            // Case 3. 12:00:00 -> 12 PM
+            zone = "PM";
+        } else {
+            // Case 4. 23:00:00 -> 11 PM
+            hour %= 12;
+            zone = "PM";
+        }
         String minute = time.getMinute() < 10 ? "0" + time.getMinute() :
                 Integer.toString(time.getMinute());
         String second = time.getSecond() < 10 ? "0" + time.getSecond() :
                 Integer.toString(time.getSecond());
-        String zone = time.getHour() > 12 ? "PM" : "AM";
         return hour + ":" + minute + ":" + second
                 + " " + zone;
     }
@@ -32,11 +58,23 @@ public class MessageUtil {
             month = Integer.parseInt(listStrings[0]);
             day = Integer.parseInt(listStrings[1]);
             year = Integer.parseInt(listStrings[2]);
-            System.out.println(day);
         } catch (NumberFormatException e) {
             throw new NumberFormatException();
         }
         return new int[]{month, day, year};
+    }
+
+    private static int parseTimeToSeconds(String timeStamp) {
+        String[] timeStampValues = timeStamp.substring(16, 23).split(":");
+        int hour = 0, minute = 0, second = 0;
+        try {
+            hour = Integer.parseInt(timeStampValues[0]);
+            minute = Integer.parseInt(timeStampValues[1]);
+            second = Integer.parseInt(timeStampValues[2]);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return hour * 3600 + minute * 60 + second;
     }
 
     /**
