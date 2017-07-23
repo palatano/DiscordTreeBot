@@ -18,9 +18,9 @@ public class DiscordReadUtil {
     Map<String, String> userMap;
     DataUtil dataUtil;
 
-    public DiscordReadUtil() {
+    public DiscordReadUtil(DataUtil dataUtil) {
         userMap = new HashMap<>();
-        dataUtil = new DataUtil();
+        this.dataUtil = dataUtil;
     }
 
     /**
@@ -75,6 +75,10 @@ public class DiscordReadUtil {
         MessageChannel msgChan = msgHistory.getChannel();
         for (Message msg : messageList) {
             if (inSameDay(msg, day)) {
+                String userMsg = MessageUtil.userMsg(msg);
+                if (userMsg == null) {
+                    continue;
+                }
                 System.out.println(MessageUtil.timeStamp(msg) + MessageUtil.userMsg(msg));
                 dataUtil.putUniqueUser(msg, msgChan);
             }

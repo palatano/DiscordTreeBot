@@ -27,7 +27,7 @@ import org.yaml.snakeyaml.Yaml;
  * Created by Valued Customer on 7/20/2017.
  */
 public class MainApplication extends ListenerAdapter {
-    private DiscordReadUtil discUtil = new DiscordReadUtil();
+    private DiscordReadUtil discUtil;
     private DataUtil dataUtil;
 
     public static void main(String[] args)
@@ -49,6 +49,7 @@ public class MainApplication extends ListenerAdapter {
 
     public MainApplication(DataUtil dataUtil) {
         this.dataUtil = dataUtil;
+        discUtil = new DiscordReadUtil(dataUtil);
     }
 
 
@@ -101,6 +102,8 @@ public class MainApplication extends ListenerAdapter {
             /* Get current message from channel. */
         } else if (msgContent.equals("!curr")) {
             getCurrMessage(event);
+        } else if (msgContent.equals("!writeData")) {
+            dataUtil.writeAllChannelsDataYaml();
         }
 
     }

@@ -66,6 +66,7 @@ public class MessageUtil {
 
     private static int parseTimeToSeconds(String timeStamp) {
         String[] timeStampValues = timeStamp.substring(16, 23).split(":");
+        String zone = timeStamp.substring(25, 27);
         int hour = 0, minute = 0, second = 0;
         try {
             hour = Integer.parseInt(timeStampValues[0]);
@@ -74,7 +75,13 @@ public class MessageUtil {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        return hour * 3600 + minute * 60 + second;
+        if (zone.equals("AM") && hour == 12) {
+            return minute * 60 + second;
+        } else if (zone.equals("PM") && hour != 12) {
+            return (hour + 12) * 3600 + minute * 60 + second;
+        } else {
+            return hour * 3600 + minute * 60 + second;
+        }
     }
 
     /**
@@ -130,9 +137,16 @@ public class MessageUtil {
      * @return formatted user and message string.
      */
     public static String userMsg(Message msg) {
-        return String.format("[Chan: %s] %s: %s",
-                msg.getTextChannel().getName(),
-                msg.getMember().getEffectiveName(),
-                msg.getContent());
+        String s = null;
+        try {
+            s = String.format("[Chan: %s] %s: %s",
+                    msg.getTextChannel().getName(),
+                    msg.getMember().getEffectiveName(),
+                    msg.getContent());
+        } catch (NullPointerException npe) {
+            npe.printStackTrace();
+            System.out.println("User is banned or left. Skipping...");
+        }
+        return s;
     }
 }

@@ -84,11 +84,18 @@ public class DataUtil {
 
     public void writeChannelDataYaml() {
         BufferedWriter writer =
-                getWriter("C:\\Users\\Valued Customer\\Documents\\GitHub\\single_output.yaml");
+                getWriter("C:\\Users\\Admin\\Documents\\GitHub\\single_output.yaml");
         if (writer == null) {
             return;
         }
         yaml.dump(uniqueUsersSingleChannelMap, writer);
+        try {
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Can't be closed.");
+            System.exit(0);
+        }
     }
 
     private Map combineChannelData() {
@@ -116,11 +123,18 @@ public class DataUtil {
 
     public void writeAllChannelsDataYaml() {
         BufferedWriter writer =
-                getWriter("C:\\Users\\Valued Customer\\Documents\\GitHub\\all_channel_output.yaml");
+                getWriter("C:\\Users\\Admin\\Documents\\GitHub\\all_channel_output.yaml");
         if (writer == null) {
             return;
         }
         Map outputMap = combineChannelData();
         yaml.dump(outputMap, writer);
+        try {
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Can't be closed.");
+            System.exit(0);
+        }
     }
 }
