@@ -1,7 +1,9 @@
 package com.jda.util;
 
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.MessageEmbed;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -70,10 +72,10 @@ public class DataUtil {
         uniqueUsersAllChannelsMap.put(chanName, uniqueUsersSingleChannelMap);
     }
 
-    private BufferedWriter getWriter(String path) {
+    private BufferedWriter getWriter(File file) {
         BufferedWriter writer = null;
         try {
-            writer = new BufferedWriter(new FileWriter(path));
+            writer = new BufferedWriter(new FileWriter(file));
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("File cannot be written to. Error.");
@@ -82,20 +84,36 @@ public class DataUtil {
         return writer;
     }
 
-    public void writeChannelDataYaml() {
-        BufferedWriter writer =
-                getWriter("C:\\Users\\Admin\\Documents\\GitHub\\single_output.yaml");
-        if (writer == null) {
+    public void writeChannelDataYaml(String channelName, int[] dateValues,
+                                     boolean toWrite, MessageChannel msgChan) {
+        String date = dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
+        String filename = channelName + "_output_" + date + ".yaml";
+        File fileDesktop = new File("C:\\Users\\Valued Customer\\Documents\\GitHub\\" +
+                filename);
+        File fileDiscord = new File(filename);
+        BufferedWriter writerToDesktop =
+                getWriter(fileDesktop);
+        if (writerToDesktop == null) {
             return;
         }
-        yaml.dump(uniqueUsersSingleChannelMap, writer);
-        try {
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Can't be closed.");
-            System.exit(0);
+        yaml.dump(uniqueUsersSingleChannelMap, writerToDesktop);
+        if (toWrite) {
+            String dataForDiscord = yaml.dump(uniqueUsersSingleChannelMap);
+            try {
+                FileUtils.writeStringToFile(fileDiscord, dataForDiscord);
+            } catch (IOException e) {
+                System.out.println("File cannot be written with YAML dump to a string. Error.");
+                return;
+            }
+            Message message = new MessageBuilder().append("The data for #" + channelName + " on " + date +
+                    " is shown below: ").build();
+            msgChan.sendFile(fileDiscord, filename, message).queue();
         }
+        closeDataWriter(writerToDesktop);
+    }
+
+    public void writeChannelDataExcel() {
+
     }
 
     private Map combineChannelData() {
@@ -121,14 +139,7 @@ public class DataUtil {
         return channelDataMap;
     }
 
-    public void writeAllChannelsDataYaml() {
-        BufferedWriter writer =
-                getWriter("C:\\Users\\Admin\\Documents\\GitHub\\all_channel_output.yaml");
-        if (writer == null) {
-            return;
-        }
-        Map outputMap = combineChannelData();
-        yaml.dump(outputMap, writer);
+    private void closeDataWriter(BufferedWriter writer) {
         try {
             writer.close();
         } catch (IOException e) {
@@ -136,5 +147,17 @@ public class DataUtil {
             System.out.println("Can't be closed.");
             System.exit(0);
         }
+    }
+
+    public void writeAllChannelsDataYaml() {
+        File file = new File("C:\\Users\\Valued Customer\\Documents\\GitHub\\all_channel_output.yaml");
+        BufferedWriter writer =
+                getWriter(file);
+        if (writer == null) {
+            return;
+        }
+        Map outputMap = combineChannelData();
+        yaml.dump(outputMap, writer);
+        closeDataWriter(writer);
     }
 }

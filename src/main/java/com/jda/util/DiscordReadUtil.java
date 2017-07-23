@@ -97,7 +97,7 @@ public class DiscordReadUtil {
      * @param{event} - the event that is called upon for the history.
      * @param{timeStamp} - the time stamp of the user.
      */
-    public void getDailyHistory(MessageChannel msgChan, String currMsg) {
+    public void getDailyHistory(MessageChannel msgChan, String currMsg, boolean toWrite) {
         currMsg = currMsg.replace("!get ", "");
         String[] listStrings = currMsg.split("/");
         int[] dateValues = MessageUtil.parseDate(listStrings);
@@ -112,7 +112,7 @@ public class DiscordReadUtil {
         }
         iterateMessagesBySpecifiedDay(dateValues[1], msgHistory, messageList);
         dataUtil.putUniqueUserMap(msgChan.getName());
-        dataUtil.writeChannelDataYaml();
+        dataUtil.writeChannelDataYaml(msgChan.getName(), dateValues, toWrite, msgChan);
     }
 
     /**

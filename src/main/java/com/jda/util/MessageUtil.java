@@ -54,6 +54,7 @@ public class MessageUtil {
 
     public static int[] parseDate(String[] listStrings) {
         int month, day, year;
+        listStrings[2] = listStrings[2].substring(0, 4);
         try {
             month = Integer.parseInt(listStrings[0]);
             day = Integer.parseInt(listStrings[1]);
@@ -66,7 +67,7 @@ public class MessageUtil {
 
     private static int parseTimeToSeconds(String timeStamp) {
         String[] timeStampValues = timeStamp.substring(16, 23).split(":");
-        String zone = timeStamp.substring(25, 27);
+        String zone = timeStamp.substring(24, 26);
         int hour = 0, minute = 0, second = 0;
         try {
             hour = Integer.parseInt(timeStampValues[0]);
@@ -123,6 +124,16 @@ public class MessageUtil {
         return date.getMonth() + " " + date.getDayOfMonth() + ", " + date.getYear();
     }
 
+    public static boolean checkIfWrite(String content) {
+        content = content.replaceFirst(" ", "");
+        String[] contentParts = content.split(" ");
+        if (contentParts.length != 2 || !contentParts[1].equals("--write")) {
+            System.out.println("Write flag not entered correctly. Will not write to file.");
+            return false;
+        } else {
+            return true;
+        }
+    }
     /**
      * Get the time stamp of a message from an event.
      * @return formatted time stamp string.

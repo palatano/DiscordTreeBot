@@ -98,9 +98,10 @@ public class MainApplication extends ListenerAdapter {
         } else if (msgContent.startsWith("!get") &&
                 MessageUtil.getCheckIfValidDate(msgContent)) {
             /* Get Message History from channel. */
-            discUtil.getDailyHistory(event.getTextChannel(), msgContent);
-            /* Get current message from channel. */
+            discUtil.getDailyHistory(event.getTextChannel(), msgContent,
+                    MessageUtil.checkIfWrite(msgContent));
         } else if (msgContent.equals("!curr")) {
+            /* Get current message from channel. */
             getCurrMessage(event);
         } else if (msgContent.equals("!writeData")) {
             dataUtil.writeAllChannelsDataYaml();
