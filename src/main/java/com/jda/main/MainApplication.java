@@ -29,6 +29,9 @@ import org.yaml.snakeyaml.Yaml;
 public class MainApplication extends ListenerAdapter {
     private DiscordReadUtil discUtil;
     private DataUtil dataUtil;
+    private static final String[] channelIDList = {"249764885246902272", "247929469552033792",
+    "269577202016845824", "247135478069854209", "247248468626636800",
+    "248243893273886720", "247134894558281730"};
 
     public static void main(String[] args)
             throws LoginException, RateLimitedException, InterruptedException {
@@ -103,7 +106,13 @@ public class MainApplication extends ListenerAdapter {
         } else if (msgContent.equals("!curr")) {
             /* Get current message from channel. */
             getCurrMessage(event);
-        } else if (msgContent.equals("!writeData")) {
+        } else if (msgContent.startsWith("!writeData") &&
+                MessageUtil.getCheckIfValidDate(msgContent)) {
+            for (String channelID : channelIDList) {
+                TextChannel channel = event.getGuild().getTextChannelById(channelID);
+                discUtil.getDailyHistory(channel, "!get " +
+                        msgContent.replace("!writeData ", ""), false);
+            }
             dataUtil.writeAllChannelDataExcel(event.getTextChannel());
         }
 

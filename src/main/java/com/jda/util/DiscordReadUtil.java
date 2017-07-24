@@ -98,6 +98,7 @@ public class DiscordReadUtil {
         } else if (messageList.isEmpty()) {
             return;
         }
+        dataUtil.setDate(dateValues);
         iterateMessagesBySpecifiedDay(dateValues[1], msgHistory, messageList);
         dataUtil.putUniqueUserMap(msgChan.getName());
         dataUtil.writeChannelDataExcel(msgChan.getName(), dateValues, toWrite, msgChan);

@@ -91,8 +91,8 @@ public class MessageUtil {
      * @return
      */
     public static boolean getCheckIfValidDate(String text) {
-        text = text.replace("!get ", "");
-        String[] listStrings = text.split("/");
+        String[] splitCommandValues = text.trim().split(" ");
+        String[] listStrings = splitCommandValues[1].split("/");
         if (listStrings.length == 3) {
             int[] dateValues = parseDate(listStrings);
             int month = dateValues[0];
@@ -130,9 +130,10 @@ public class MessageUtil {
         if (contentParts.length != 2 || !contentParts[1].equals("--write")) {
             System.out.println("Write flag not entered correctly. Will not write to file.");
             return false;
-        } else {
-            return true;
+        } else if (contentParts[1].trim().equals("")) {
+            return false;
         }
+        return true;
     }
     /**
      * Get the time stamp of a message from an event.

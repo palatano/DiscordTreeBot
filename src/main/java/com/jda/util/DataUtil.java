@@ -45,8 +45,8 @@ public class DataUtil {
         uniqueUsersSingleChannelMap = new HashMap<>();
     }
 
-    public String setDate(int[] dateValues) {
-        return dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
+    public void setDate(int[] dateValues) {
+        currDate = dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
     }
     /**
      * Get the credentials data structure for logging the bot into the server.
@@ -135,21 +135,21 @@ public class DataUtil {
     }
 
     private Map combineChannelData() {
-        Map<String, String> channelDataMap = new HashMap<>();
+        Map<String, MemberData> channelDataMap = new HashMap<>();
         // Iterate over all maps, which represent data from a single channel.
         for (Map.Entry allEntry : uniqueUsersAllChannelsMap.entrySet()) {
             String currChannelName = (String) allEntry.getKey();
-            Map<String, String> currChannelMap = (Map<String, String>) allEntry.getValue();
+            Map<String, MemberData> currChannelMap = (Map<String, MemberData>) allEntry.getValue();
             for (Map.Entry singleEntry : currChannelMap.entrySet()) {
                 String userName = (String) singleEntry.getKey();
-                String timeStampOne = (String) singleEntry.getValue();
+                MemberData memData = (MemberData) singleEntry.getValue();
                 // For each single channel, check if the time stamp is earlier than the one already stored.
                 if (!channelDataMap.containsKey(userName)) {
-                    channelDataMap.put(userName, timeStampOne);
+                    channelDataMap.put(userName, memData);
                 } else {
-                    String timeStampTwo = currChannelMap.get(userName);
-                    if (MessageUtil.compareTimeStamp(timeStampOne, timeStampTwo) == 1) {
-                        currChannelMap.put(userName, timeStampOne);
+                    MemberData memDataTwo = currChannelMap.get(userName);
+                    if (MessageUtil.compareTimeStamp(memData.timeStamp, memDataTwo.timeStamp) == 1) {
+                        currChannelMap.put(userName, memDataTwo);
                     }
                 }
             }
@@ -184,8 +184,9 @@ public class DataUtil {
         File fileDiscord = new File("all_channel_data_" + currDate + ".xlsx");
         Map outputMap = combineChannelData();
         excelUtil.writeToExcel(outputMap, fileDesktop, currDate, "all channels");
+        excelUtil.writeToExcel(outputMap, fileDiscord, currDate, "all channels");
         String channelList = "";
-        for (Object key : outputMap.keySet()) {
+        for (Object key : uniqueUsersAllChannelsMap.keySet()) {
             String channelName = (String) key;
             channelList += "#" + channelName + ", ";
         }
