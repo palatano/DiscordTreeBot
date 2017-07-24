@@ -23,18 +23,6 @@ public class DiscordReadUtil {
         this.dataUtil = dataUtil;
     }
 
-    /**
-     * Data analysis method for adding a new daily active user.
-     * @param event - event of a received message.
-     * @param publicMessage - message to be added. (MODIFY TO TIMESTAMP).
-     */
-    public void getPublicData(MessageReceivedEvent event, String publicMessage) {
-        String userName = event.getMember().getEffectiveName();
-        if (!userMap.containsKey(userName)) {
-            userMap.put(userName, publicMessage);
-        }
-    }
-
     public boolean inSameDay(Message msg, int day) {
         OffsetDateTime msgDate = msg.getCreationTime().minusHours(4);
         return msgDate.getDayOfMonth() == day;
@@ -55,13 +43,13 @@ public class DiscordReadUtil {
         }
         // Make sure the specified date is not later than today.
         Message firstMsg = messageList.get(0);
-        if (firstMsg.getCreationTime().getDayOfMonth() < day) {
+        if (firstMsg.getCreationTime().minusHours(4).getDayOfMonth() < day) {
             System.out.println("Specified day is later than the most recent message. Error.");
             return null;
         }
         // Attempt to find the messages until it matches the day.
         Message currMsg = messageList.get(messageList.size() - 1);
-        while (currMsg.getCreationTime().getDayOfMonth() > day) {
+        while (currMsg.getCreationTime().minusHours(4).getDayOfMonth() > day) {
             messageList = getMessages(msgHistory);
             currMsg = messageList.get(messageList.size() - 1);
         }
@@ -112,7 +100,7 @@ public class DiscordReadUtil {
         }
         iterateMessagesBySpecifiedDay(dateValues[1], msgHistory, messageList);
         dataUtil.putUniqueUserMap(msgChan.getName());
-        dataUtil.writeChannelDataYaml(msgChan.getName(), dateValues, toWrite, msgChan);
+        dataUtil.writeChannelDataExcel(msgChan.getName(), dateValues, toWrite, msgChan);
     }
 
     /**

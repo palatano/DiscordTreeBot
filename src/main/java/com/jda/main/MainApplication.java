@@ -104,7 +104,7 @@ public class MainApplication extends ListenerAdapter {
             /* Get current message from channel. */
             getCurrMessage(event);
         } else if (msgContent.equals("!writeData")) {
-            dataUtil.writeAllChannelsDataYaml();
+            dataUtil.writeAllChannelDataExcel(event.getTextChannel());
         }
 
     }

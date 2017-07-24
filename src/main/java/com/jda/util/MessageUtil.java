@@ -139,7 +139,7 @@ public class MessageUtil {
      * @return formatted time stamp string.
      */
     public static String timeStamp(Message msg) {
-        return "[" + getDate(msg) + "][" + MessageUtil.getTime(msg) + "]";
+        return "[" + getDate(msg) + "][" + MessageUtil.getTime(msg) + " EST]";
     }
 
     /**
@@ -155,7 +155,6 @@ public class MessageUtil {
                     msg.getMember().getEffectiveName(),
                     msg.getContent());
         } catch (NullPointerException npe) {
-            npe.printStackTrace();
             System.out.println("User is banned or left. Skipping...");
         }
         return s;

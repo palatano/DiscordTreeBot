@@ -20,14 +20,17 @@ import java.util.Map;
  */
 public class DataUtil {
     private Map<String, Object> creds;
-    private Map<String, String> uniqueUsersSingleChannelMap;
+    private Map<String, MemberData> uniqueUsersSingleChannelMap;
     private Map<String, Map> uniqueUsersAllChannelsMap;
     private Yaml yaml;
+    private ExcelUtil excelUtil;
+    private String currDate;
 
     public DataUtil() {
         uniqueUsersSingleChannelMap = new HashMap<>();
         uniqueUsersAllChannelsMap = new HashMap<>();
         yaml = new Yaml();
+        excelUtil = new ExcelUtil();
     }
 
     public Map<String, Object> getCreds() {
@@ -42,6 +45,9 @@ public class DataUtil {
         uniqueUsersSingleChannelMap = new HashMap<>();
     }
 
+    public String setDate(int[] dateValues) {
+        return dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
+    }
     /**
      * Get the credentials data structure for logging the bot into the server.
      * @param file - The filename argument.
@@ -64,7 +70,9 @@ public class DataUtil {
     public void putUniqueUser(Message msg, MessageChannel msgChan) {
         String user = msg.getAuthor().getName();
         if (!uniqueUsersSingleChannelMap.containsKey(user)) {
-            uniqueUsersSingleChannelMap.put(user, MessageUtil.timeStamp(msg));
+            MemberData memData = new MemberData(MessageUtil.timeStamp(msg), msg.getContent(),
+                    msg.getAuthor().getName(), msg.getMember().getNickname());
+            uniqueUsersSingleChannelMap.put(user, memData);
         }
     }
 
@@ -84,36 +92,46 @@ public class DataUtil {
         return writer;
     }
 
-    public void writeChannelDataYaml(String channelName, int[] dateValues,
-                                     boolean toWrite, MessageChannel msgChan) {
+    public void writeChannelDataYaml(String channelName, int[] dateValues) {
         String date = dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
-        String filename = channelName + "_output_" + date + ".yaml";
-        File fileDesktop = new File("C:\\Users\\Valued Customer\\Documents\\GitHub\\" +
-                filename);
-        File fileDiscord = new File(filename);
-        BufferedWriter writerToDesktop =
-                getWriter(fileDesktop);
+        File fileDesktop = createFormattedFile(channelName, date, false);
+        File fileDiscord = createFormattedFile(channelName, date, true);
+        BufferedWriter writerToDesktop = getWriter(fileDesktop);
         if (writerToDesktop == null) {
             return;
         }
-        yaml.dump(uniqueUsersSingleChannelMap, writerToDesktop);
-        if (toWrite) {
-            String dataForDiscord = yaml.dump(uniqueUsersSingleChannelMap);
-            try {
-                FileUtils.writeStringToFile(fileDiscord, dataForDiscord);
-            } catch (IOException e) {
-                System.out.println("File cannot be written with YAML dump to a string. Error.");
-                return;
-            }
-            Message message = new MessageBuilder().append("The data for #" + channelName + " on " + date +
-                    " is shown below: ").build();
-            msgChan.sendFile(fileDiscord, filename, message).queue();
-        }
         closeDataWriter(writerToDesktop);
+        yaml.dump(uniqueUsersSingleChannelMap, writerToDesktop);
+        String dataForDiscord = yaml.dump(uniqueUsersSingleChannelMap);
+        try {
+            FileUtils.writeStringToFile(fileDiscord, dataForDiscord);
+        } catch (IOException e) {
+            System.out.println("File cannot be written with YAML dump to a string. Error.");
+            return;
+        }
     }
 
-    public void writeChannelDataExcel() {
+    private File createFormattedFile(String channelName, String date, boolean writeToDiscord) {
+        String filename = channelName + "_output_" + date + ".xlsx";
+        if (writeToDiscord) {
+            return new File(filename);
+        }
+        return new File(creds.get("filepath") + filename);
+    }
 
+    public void writeChannelDataExcel(String channelName, int[] dateValues,
+                                     boolean writeToDiscord, MessageChannel msgChan) {
+        String date = dateValues[0] + "_" + dateValues[1] + "_" + dateValues[2];
+        File fileDesktop = createFormattedFile(channelName, date, false);
+        File fileDiscord = createFormattedFile(channelName, date, true);
+
+        excelUtil.writeToExcel(uniqueUsersSingleChannelMap, fileDesktop, date, channelName);
+        if (writeToDiscord) {
+            excelUtil.writeToExcel(uniqueUsersSingleChannelMap, fileDiscord, date, channelName);
+            Message message = new MessageBuilder().append("The data for #" + channelName + " on " + date +
+                    " is shown below: ").build();
+            msgChan.sendFile(fileDiscord, fileDesktop.getName(), message).queue();
+        }
     }
 
     private Map combineChannelData() {
@@ -150,7 +168,7 @@ public class DataUtil {
     }
 
     public void writeAllChannelsDataYaml() {
-        File file = new File("C:\\Users\\Valued Customer\\Documents\\GitHub\\all_channel_output.yaml");
+        File file = new File(creds.get("filepath") + "all_channel_output.yaml");
         BufferedWriter writer =
                 getWriter(file);
         if (writer == null) {
@@ -160,4 +178,22 @@ public class DataUtil {
         yaml.dump(outputMap, writer);
         closeDataWriter(writer);
     }
+
+    public void writeAllChannelDataExcel(MessageChannel msgChan) {
+        File fileDesktop = new File(creds.get("filePath") + "all_channel_data_" + currDate + ".xlsx");
+        File fileDiscord = new File("all_channel_data_" + currDate + ".xlsx");
+        Map outputMap = combineChannelData();
+        excelUtil.writeToExcel(outputMap, fileDesktop, currDate, "all channels");
+        String channelList = "";
+        for (Object key : outputMap.keySet()) {
+            String channelName = (String) key;
+            channelList += "#" + channelName + ", ";
+        }
+        Message message = new MessageBuilder().append("The data for {" +
+                channelList.substring(0, channelList.length() - 2) + "} on " + currDate +
+                " is shown below: ").build();
+        msgChan.sendFile(fileDiscord, fileDesktop.getName(), message).queue();
+    }
+
+
 }
