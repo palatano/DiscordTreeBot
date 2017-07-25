@@ -1,14 +1,27 @@
 package com.jda.util;
 
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageHistory;
 
 import java.time.OffsetDateTime;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * Created by Admin on 7/20/2017.
  */
 public class MessageUtil {
+
+    public static boolean isInvalidFutureDate(Calendar cal, OffsetDateTime msgDate) {
+        int msg = msgDate.getDayOfYear();
+        int calday = cal.get(Calendar.DAY_OF_YEAR);
+        return cal.get(Calendar.DAY_OF_YEAR) > msgDate.getDayOfYear();
+    }
+
+    public static boolean msgDateAfterCal(Calendar cal, OffsetDateTime msgDate) {
+        return cal.get(Calendar.DAY_OF_YEAR) < msgDate.getDayOfYear();
+    }
 
     /**
      * Comparator method for time stamps.
@@ -52,7 +65,7 @@ public class MessageUtil {
                 + " " + zone;
     }
 
-    public static int[] parseDate(String[] listStrings) {
+    public static Calendar parseDate(String[] listStrings) {
         int month, day, year;
         listStrings[2] = listStrings[2].substring(0, 4);
         try {
@@ -62,7 +75,9 @@ public class MessageUtil {
         } catch (NumberFormatException e) {
             throw new NumberFormatException();
         }
-        return new int[]{month, day, year};
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("EST"));
+        cal.set(year, month - 1, day);
+        return cal;
     }
 
     private static int parseTimeToSeconds(String timeStamp) {
@@ -94,10 +109,10 @@ public class MessageUtil {
         String[] splitCommandValues = text.trim().split(" ");
         String[] listStrings = splitCommandValues[1].split("/");
         if (listStrings.length == 3) {
-            int[] dateValues = parseDate(listStrings);
-            int month = dateValues[0];
-            int day = dateValues[1];
-            int year = dateValues[2];
+            Calendar cal = parseDate(listStrings);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
+            int year = cal.get(Calendar.YEAR);
             if (month < 1 || month > 12) {
                 System.out.println("Invalid month. Must be between 1-12");
                 return false;

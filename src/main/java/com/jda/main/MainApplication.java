@@ -3,6 +3,7 @@ package com.jda.main;
 import com.jda.util.DataUtil;
 import com.jda.util.DiscordReadUtil;
 import com.jda.util.MessageUtil;
+import com.jda.util.SerializableMessageHistory;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -19,7 +20,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -33,6 +36,13 @@ public class MainApplication extends ListenerAdapter {
     "269577202016845824", "247135478069854209", "247248468626636800",
     "248243893273886720", "247134894558281730"};
 
+    private static OkHttpClient.Builder setupBuilder(OkHttpClient.Builder builder) {
+        builder = builder.connectTimeout(60000, TimeUnit.MILLISECONDS);
+        builder = builder.readTimeout(60000, TimeUnit.MILLISECONDS);
+        builder = builder.writeTimeout(60000, TimeUnit.MILLISECONDS);
+        return builder;
+    }
+
     public static void main(String[] args)
             throws LoginException, RateLimitedException, InterruptedException {
         /* Get the credentials file. */
@@ -44,7 +54,9 @@ public class MainApplication extends ListenerAdapter {
         dataUtil.setCreds(creds);
         /* Create the bot and add the listeners for the bot. */
         String token = (String) creds.get("token");
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
         JDA jda = new JDABuilder(AccountType.BOT)
+                .setHttpClientBuilder(setupBuilder(builder))
                 .setToken(token)
                 .buildBlocking();
         jda.addEventListener(new MainApplication(dataUtil));
@@ -108,10 +120,13 @@ public class MainApplication extends ListenerAdapter {
             getCurrMessage(event);
         } else if (msgContent.startsWith("!writeData") &&
                 MessageUtil.getCheckIfValidDate(msgContent)) {
+            dataUtil.resetMap();
             for (String channelID : channelIDList) {
+                // Get the channel and message history to iterate over.
                 TextChannel channel = event.getGuild().getTextChannelById(channelID);
                 discUtil.getDailyHistory(channel, "!get " +
                         msgContent.replace("!writeData ", ""), false);
+                // Set the message history to null to reset for the next operation.
             }
             dataUtil.writeAllChannelDataExcel(event.getTextChannel());
         }
