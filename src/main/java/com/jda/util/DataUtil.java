@@ -7,10 +7,10 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.text.StringCharacterIterator;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -26,6 +26,7 @@ public class DataUtil {
     private Yaml yaml;
     private ExcelUtil excelUtil;
     private String currDate;
+    private static final int NUMBER_NUG_PHOTOS = 12;
 
     public DataUtil() {
         uniqueUsersSingleChannelMap = new HashMap<>();
@@ -193,5 +194,60 @@ public class DataUtil {
                channelList.substring(0, channelList.length() - 2) + "} on " + currDate +
                     " is shown below: ").build();
         msgChan.sendFile(fileDiscord, fileDiscord.getName(), message).queue();
+    }
+
+    private boolean tryFileExtension(String filePath, String filename, String ext) {
+//        try {
+            File nugFile = new File(filePath + filename + ext);
+            return nugFile.exists();
+//        } catch (FileNotFoundException fnfe) {
+//            System.out.println(filename + " with extension " + ext + " not found");
+//            return false;
+//        }
+//        return true;
+    }
+
+    private boolean convertAndSendImage(File outputNugFile, MessageChannel msgChan) {
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(FileUtils.readFileToByteArray(outputNugFile));
+            BufferedImage image = ImageIO.read(bais);
+//            BufferedImage newBufferedImage = new BufferedImage(image.getWidth(),
+//                    image.getHeight(), BufferedImage.TYPE_INT_RGB);
+//            newBufferedImage.createGraphics().drawImage(image,
+//                    0, 0, Color.WHITE, null);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+
+            File nugToDiscord = new File("nug.png");
+            OutputStream outputStream = new FileOutputStream (nugToDiscord);
+            baos.writeTo(outputStream);
+            baos.close();
+
+            Message msg = new MessageBuilder().append(" ").build();
+            msgChan.sendFile(nugToDiscord, msg).queue();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("File could not be created.");
+            return false;
+        }
+        return true;
+    }
+
+    public void writeRandomNugPhoto(MessageChannel msgChan) {
+        int rand = (int) Math.ceil(Math.random() * NUMBER_NUG_PHOTOS);
+        String nugFilePath = creds.get("filePath") + "\\discord-dau\\etc\\nug\\";
+        String nugFileName = "nug" + rand;
+        String[] fileExtensions = new String[]{".png", ".jpg"};
+        File outputNugFile = null;
+
+        for (String ext : fileExtensions) {
+            if (tryFileExtension(nugFilePath, nugFileName, ext)) {
+                outputNugFile = new File(nugFilePath + nugFileName + ext);
+                convertAndSendImage(outputNugFile, msgChan);
+                return;
+            }
+        }
+        System.out.println("No files found with extensions" + fileExtensions.toString());
     }
 }

@@ -7,6 +7,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public class DiscordReadUtil {
         // Attempt to find the messages until it matches the day.
         Message currMsg = messageList.get(messageList.size() - 1);
         int currDay = currMsg.getCreationTime().minusHours(4).getDayOfMonth();
-        while (MessageUtil.msgDateAfterCal(cal, msgDate)) {
+        while (MessageUtil.msgDateAfterCal(cal, msgDate) && messageList.size() == 100) {
             messageList = getMessages(msgHistory);
             currMsg = messageList.get(messageList.size() - 1);
             System.out.println("Day is " + currDay + " with time " +
@@ -90,6 +91,10 @@ public class DiscordReadUtil {
                 System.out.println(MessageUtil.timeStamp(msg) + MessageUtil.userMsg(msg));
                 dataUtil.putUniqueUser(msg, msgChan);
             }
+        }
+        if (messageList.isEmpty()) {
+            System.out.println("History is either empty or have already hit the end of the message history.");
+            return;
         }
         Message lastMsg = messageList.get(messageList.size() - 1);
         if (!inSameDay(lastMsg, cal)) {

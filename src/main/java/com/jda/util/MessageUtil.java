@@ -14,13 +14,28 @@ import java.util.TimeZone;
 public class MessageUtil {
 
     public static boolean isInvalidFutureDate(Calendar cal, OffsetDateTime msgDate) {
-        int msg = msgDate.getDayOfYear();
-        int calday = cal.get(Calendar.DAY_OF_YEAR);
-        return cal.get(Calendar.DAY_OF_YEAR) > msgDate.getDayOfYear();
+        int commandYear = cal.get(Calendar.YEAR);
+        int msgYear = msgDate.getYear();
+        int commandDay = cal.get(Calendar.DAY_OF_YEAR);
+        int msgDay = msgDate.getDayOfYear();
+        return cal.get(Calendar.DAY_OF_YEAR) > msgDate.getDayOfYear() && // ... 302 > 203 TRUE, 302 > 365 FALSE
+                cal.get(Calendar.YEAR) > msgDate.getYear(); // 2016 > 2017 FALSE, 2016 > 2017 FALSE,
+        /*
+        Case 1: 8/1/2017 -> True. Error.
+        Case 2: 7/23/2017 -> False. Continue.
+        Case 3: 11/12/2016 -> False. Continue.
+        Case 4: 11/11/2016 -> No more history. Error.
+         */
     }
 
     public static boolean msgDateAfterCal(Calendar cal, OffsetDateTime msgDate) {
-        return cal.get(Calendar.DAY_OF_YEAR) < msgDate.getDayOfYear();
+        return cal.get(Calendar.DAY_OF_YEAR) < msgDate.getDayOfYear() || // 302 < 203 FALSE -> 302 < 364 TRUE -> 302 FALSE
+                cal.get(Calendar.YEAR) < msgDate.getYear(); // 2016 < 2017 TRUE -> 2016 FALSE
+        /*
+        Case 2: 07/23/2017 -> False. Continue.
+        Case 3: 11/12/2016 -> True. Stop.
+        Case 4: 11/11/2016 -> False. Should not reach.
+         */
     }
 
     /**
@@ -67,6 +82,8 @@ public class MessageUtil {
 
     public static Calendar parseDate(String[] listStrings) {
         int month, day, year;
+        int dayStringLength = listStrings[0].length();
+        listStrings[0] = listStrings[0].substring(dayStringLength - 2, dayStringLength);
         listStrings[2] = listStrings[2].substring(0, 4);
         try {
             month = Integer.parseInt(listStrings[0]);
