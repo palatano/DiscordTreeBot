@@ -3,7 +3,6 @@ package commandutil.type;
 /**
  * Created by Valued Customer on 7/31/2017.
  */
-public interface Command {
+public interface PictureCommand extends Command {
 
-    public String getCommandName();
 }

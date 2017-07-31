@@ -1,6 +1,6 @@
 package command.etc;
 
-import commandutil.type.AdminCommand;
+import commandutil.type.TextCommand;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
@@ -9,14 +9,15 @@ import net.dv8tion.jda.core.entities.MessageChannel;
 /**
  * Created by Admin on 7/29/2017.
  */
-public class TestCommand extends AdminCommand {
+public class TestCommand implements TextCommand {
+    String commandName;
 
     public TestCommand(String commandName) {
-        super(commandName);
+        this.commandName = commandName;
     }
 
     @Override
-    public String help() {
+    public String help(MessageChannel msgChan) {
         return "To use this command, all you have to do is type $help test";
     }
 
@@ -24,6 +25,10 @@ public class TestCommand extends AdminCommand {
     public void execute(Guild guild, MessageChannel msgChan,
                         Message message, Member member) {
         message.addReaction("\uD83D\uDE02").queue();
+    }
+
+    public String getCommandName() {
+        return commandName;
     }
 
 

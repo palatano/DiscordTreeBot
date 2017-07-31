@@ -3,7 +3,8 @@ package commandutil.type;
 /**
  * Created by Valued Customer on 7/31/2017.
  */
-public interface Command {
+public interface AnalysisCommand extends Command {
 
-    public String getCommandName();
+    public void execute();
+
 }

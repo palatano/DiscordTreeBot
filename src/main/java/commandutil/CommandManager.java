@@ -1,11 +1,10 @@
 package commandutil;
 
 import command.analysis.DateFindUtil;
-import command.util.MessageUtil;
 import commandutil.type.Command;
+import commandutil.type.TextCommand;
 import commandutil.util.CommandRegistry;
 import net.dv8tion.jda.core.entities.*;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,13 +21,10 @@ public class CommandManager {
     public static DateFindUtil dateFinder;
     private boolean nugPicAllowed = true;
     private int numNugCount = 0;
-//    private CommandRegistry commandRegistry;
 
     public static void init() {
         CommandRegistry.setCommandRegistry();
-        //discUtil = new DailyUniqueUsers();
         dateFinder = new DateFindUtil();
-       // timerInitialize();
     }
 
     private void timerInitialize() {
@@ -46,12 +42,17 @@ public class CommandManager {
     public static boolean messageCommand(Message message) {
         String msgText = message.getContent();
         String[] args = CommandParser.parseMessage(msgText);
+        if (args == null) {
+            System.out.println("Command not found.");
+            return false;
+        }
         Command command = CommandRegistry.commandRegistry.getCommand(args[0]);
-        if (command == null) {
+        if (command == null || !(command instanceof TextCommand)) {
             System.out.println("Error retrieving command from the list.");
             return false;
         }
-        command.execute(message.getGuild(), message.getChannel(), message, message.getMember());
+        TextCommand textCommand = (TextCommand) command;
+        textCommand.execute(message.getGuild(), message.getChannel(), message, message.getMember());
         return false;
     }
 /*

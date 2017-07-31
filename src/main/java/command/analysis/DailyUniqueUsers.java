@@ -3,7 +3,7 @@
 //import command.util.MessageUtil;
 //import command.data.SerializableMessageHistory;
 //import command.util.DataUtil;
-//import commandutil.type.UserCommand;
+//import commandutil.util.UserCommand;
 //import net.dv8tion.jda.core.entities.Message;
 //import net.dv8tion.jda.core.entities.MessageChannel;
 //import net.dv8tion.jda.core.entities.MessageHistory;
