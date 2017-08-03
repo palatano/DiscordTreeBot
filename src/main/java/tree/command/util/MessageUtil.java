@@ -182,7 +182,7 @@ public class MessageUtil {
         return true;
     }
     /**
-     * Get the time stamp of a message from an tree.event.
+     * Get the time stamp of a message from an event.
      * @return formatted time stamp string.
      */
     public static String timeStamp(Message msg) {
@@ -190,7 +190,7 @@ public class MessageUtil {
     }
 
     /**
-     * Get the user and message from an tree.event.
+     * Get the user and message from an event.
      * @param msg - the current message.
      * @return formatted user and message string.
      */

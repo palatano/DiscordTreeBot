@@ -20,7 +20,6 @@ public class JoinDateCommand implements AnalysisCommand {
     private List<Member> menuMemberList = new ArrayList<>();
     private String commandName;
 
-
     public JoinDateCommand(String commandName) {
         this.commandName = commandName;
     }
@@ -35,10 +34,10 @@ public class JoinDateCommand implements AnalysisCommand {
                         return 1;
                     }
                 }
-                sendError("Wrap the name to search with <>. For example, !dateJoined <palat>", msgChan);
+                sendError("Wrap the name to search with <>. For example, &datejoin <palat>", msgChan);
                 return 0;
             } else if (c == '>') {
-                sendError("Wrap the name to search with <>. For example, !dateJoined <palat>", msgChan);
+                sendError("Wrap the name to search with <>. For example, &joindate <palat>", msgChan);
                 return 0;
             }
         }
@@ -86,7 +85,7 @@ public class JoinDateCommand implements AnalysisCommand {
             // More than one match found. Menu needed.
             int currIndex = 1;
             String menuSelection = "Multiple users found. Please select the option with the correct user," +
-                    " typing !dateJoined n, where n is your option:\n";
+                    " typing &datejoin n, where n is your option:\n";
             for (Member currMember : memberList) {
                 User user = currMember.getUser();
                 menuSelection += Integer.toString(currIndex++) + ": " + user.getName() +
@@ -104,7 +103,7 @@ public class JoinDateCommand implements AnalysisCommand {
 
         // Check if valid number of arguments:
         if (memberStringCommand.length == 1) {
-            sendError("No parameter (name) entered after !dateJoined tree.command.", msgChan);
+            sendError("No parameter (name) entered after &joindate tree.command.", msgChan);
             return;
         }
 
@@ -135,7 +134,7 @@ public class JoinDateCommand implements AnalysisCommand {
                 parameters = memberStringCommand[1].split(">");
                 if (parameters.length > 1) {
                     sendError("Only one parameter (name) at a time. If you have a name with spaces," +
-                            " surround the name with <>. e.g. !dateJoined <palat>", msgChan);
+                            " surround the name with <>. e.g. &joindate <palat>", msgChan);
                     return;
                 }
                 memberString = parameters[0].replaceAll("<", "")
@@ -148,7 +147,7 @@ public class JoinDateCommand implements AnalysisCommand {
                 parameters = memberStringCommand[1].split(" ");
                 if (parameters.length > 1) {
                     sendError("Only one parameter (name) at a time. If you have a name with spaces," +
-                            " surround the name with <>. e.g. !dateJoined <palat>", msgChan);
+                            " surround the name with <>. e.g. &joindate <palat>", msgChan);
                     return;
                 }
                 memberString = parameters[0].replaceAll("<", "").

@@ -29,7 +29,7 @@ public abstract class TreeMain extends ListenerAdapter {
 
     /**
      * Confirm that the user is palat, so the commands won't be abused.
-     * @param event - tree.event of a received message.
+     * @param event - event of a received message.
      * @return boolean depending if user is palat.
      */
 

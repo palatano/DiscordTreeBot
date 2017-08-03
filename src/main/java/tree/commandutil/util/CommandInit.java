@@ -14,7 +14,7 @@ import java.util.Map;
 public class CommandInit {
     private static final String[] textCommands = {"test", "commands"};
     private static final String[] pictureCommands = {"nugget"};
-    private static final String[] analysisCommands = {"joindate", "uniqueusers"};
+    private static final String[] analysisCommands = {"joindate", "uniqueusers", "search"};
 
     public static void addCommands(Map<String, Command> commandList) {
         // Add all of the text commands first.

@@ -11,13 +11,14 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
  */
 public class TreeListener extends ListenerAdapter {
 
-    private boolean isMainUser(MessageReceivedEvent event) {
-        String name = event.getAuthor().getId();
-        return name.equals("192372494202568706");
-    }
-
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (!inBotChannel(event.getChannel())) {
+        if (event.getTextChannel() == null) {
+            return;
+        }
+//        if (!testingOnly(event.getTextChannel())) {
+//            return;
+//        }
+        if (!inBotChannel(event)) {
             return;
         }
         Message msg = event.getMessage();
@@ -32,8 +33,13 @@ public class TreeListener extends ListenerAdapter {
         return msgChan.getId().equals("337641574249005065");
     }
 
-    private boolean inBotChannel(MessageChannel msgChan) {
-        return msgChan.getId().equals("249791455592316930");
+    private boolean inBotChannel(MessageReceivedEvent event) {
+        if (event.getGuild().getName().equals("/r/trees")) {
+            return event.getTextChannel()
+                    .getId()
+                    .equals("249791455592316930");
+        }
+        return true;
     }
 
 }

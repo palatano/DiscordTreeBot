@@ -105,7 +105,7 @@ public class UniqueUserCommand implements AnalysisCommand {
     /**
      * Gets the history for the channel, between the interval 00:00:00 to 23:59:59 of the
      * same day. TESTED on #treehouse momentarily.
-     * @param{tree.event} - the tree.event that is called upon for the history.
+     * @param{event} - the event that is called upon for the history.
      * @param{timeStamp} - the time stamp of the user.
      */
     public void getDailyHistory(MessageChannel msgChan, String currMsg, boolean toWrite) {

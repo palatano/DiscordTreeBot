@@ -60,7 +60,7 @@ public class NuggetCommand implements PictureCommand {
 
     public NuggetCommand(String commandName) {
         this.commandName = commandName;
-        photoIDsPosted = new PriorityQueue<>(Comparator.comparing(Pair::getKey));
+        photoIDsPosted = new PriorityQueue<>(Comparator.comparing(Pair::getValue));
         nuggetStopWatch = new StopWatch();
         nuggetStopWatch.start();
         timerInitialize();
@@ -114,7 +114,7 @@ public class NuggetCommand implements PictureCommand {
     }
 
     private void incrementNuggetCount() {
-        if (++numNugCount >= 2) {
+        if (++numNugCount >= 5) {
             nugPicAllowed = false;
         }
     }
@@ -132,7 +132,8 @@ public class NuggetCommand implements PictureCommand {
                 // To prevent the bot from posting the same photo five
                 // consecutive times, keep track of photo IDs.
                 if (photoIDsPosted.size() >= 5) {
-                    photoIDsPosted.poll();
+                    Pair p = photoIDsPosted.poll();
+                    System.out.println("ID = " + p.getKey() + "time = " + p.getValue());
                 }
                 photoIDsPosted.offer(new Pair(rand, (int) nuggetStopWatch.getTime()));
                 outputNugFile = new File(nugFilePath + nugFileName + ext).getAbsoluteFile();
