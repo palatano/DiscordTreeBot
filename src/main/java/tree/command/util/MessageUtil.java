@@ -112,7 +112,7 @@ public class MessageUtil {
     }
 
     private static int parseTimeToSeconds(String timeStamp) {
-        String[] timeStampValues = timeStamp.substring(16, 23).split(":");
+        String[] timeStampValues = timeStamp.substring(17, 24).split(":");
         String zone = timeStamp.substring(24, 26);
         int hour = 0, minute = 0, second = 0;
         try {

@@ -1,8 +1,6 @@
 package tree.commandutil.type;
 
-import tree.command.analysis.GoogleSearchCommand;
-import tree.command.analysis.JoinDateCommand;
-import tree.command.analysis.UniqueUserCommand;
+import tree.command.analysis.*;
 
 /**
  * Created by Valued Customer on 7/31/2017.
@@ -23,6 +21,10 @@ public class AnalysisCommandFactory extends AbstractCommandFactory {
                 return new UniqueUserCommand("uniqueusers");
             case "search":
                 return new GoogleSearchCommand("search");
+            case "ping":
+                return new PingCommand("ping");
+            case "youtube":
+                return new YoutubeCommand("youtube");
             default:
                 return null;
         }

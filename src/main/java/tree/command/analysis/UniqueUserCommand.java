@@ -155,6 +155,7 @@ public class UniqueUserCommand implements AnalysisCommand {
             dataUtil.writeChannelDataExcel(messageChannel.getName(), cal, false, msgChan);
         }
         dataUtil.writeAllChannelDataExcel(msgChan);
+//        guild.getJDA().get
     }
 
     @Override

@@ -18,7 +18,7 @@ public class CommandManager {
             "269577202016845824", "247135478069854209", "247248468626636800",
             "248243893273886720", "247134894558281730"};
     private static final String[] rulesInfo = {"247109092567547905"};
-    private static final String[] adminCommands = {"uniqueusers"};
+    public static final String[] adminCommands = {"uniqueusers"};
     private static boolean followUpCommand = false;
     private boolean nugPicAllowed = true;
     private int numNugCount = 0;

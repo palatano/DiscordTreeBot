@@ -3,10 +3,13 @@ package tree.command.text;
 import javafx.scene.text.Text;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.Command;
 import tree.commandutil.type.TextCommand;
 import tree.commandutil.util.CommandRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,8 +19,18 @@ import java.util.Set;
 public class CommandsCommand implements TextCommand {
     private String commandName;
 
+
     public CommandsCommand(String commmandName) {
         this.commandName = commmandName;
+    }
+
+    private boolean isAdminCommand(String commandName) {
+        for (String com : CommandManager.adminCommands) {
+            if (com.equals(commandName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private MessageEmbed getCommandsHelp() {
@@ -29,6 +42,9 @@ public class CommandsCommand implements TextCommand {
         for (Map.Entry commandEntry : commandEntries) {
             String commandName = (String) commandEntry.getKey();
             Command command = (Command) commandEntry.getValue();
+            if (isAdminCommand(commandName)) {
+                continue;
+            }
             embed.addField(command.getCommandName(), command.help(), true);
         }
         return embed.build();

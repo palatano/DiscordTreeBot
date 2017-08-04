@@ -103,7 +103,7 @@ public class JoinDateCommand implements AnalysisCommand {
 
         // Check if valid number of arguments:
         if (memberStringCommand.length == 1) {
-            sendError("No parameter (name) entered after &joindate tree.command.", msgChan);
+            sendError("No parameter (name) entered after &joindate command.", msgChan);
             return;
         }
 
