@@ -9,7 +9,7 @@
         <module name="Discord-DAU" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8">
       <module name="Discord-DAU" target="1.8" />
     </bytecodeTargetLevel>
   </component>
