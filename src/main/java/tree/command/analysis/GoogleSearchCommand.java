@@ -2,13 +2,15 @@ package tree.command.analysis;
 
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
-import org.codehaus.plexus.util.StringInputStream;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tree.command.data.GoogleResults;
 import tree.command.util.MessageUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
 import java.io.*;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import tree.util.LoggerUtil;
 
 import javax.print.Doc;
 import javax.xml.ws.http.HTTPException;
@@ -32,8 +35,8 @@ import javax.xml.ws.http.HTTPException;
 public class GoogleSearchCommand implements AnalysisCommand {
     private String userAgent;
     private String commandName;
-    private Map<Integer, String> urlsToSelect;
     private int counter = 0;
+    private static Logger log = LoggerFactory.getLogger(CommandManager.class);
 
     public GoogleSearchCommand(String commandName) {
         this.commandName = commandName;
@@ -57,7 +60,6 @@ public class GoogleSearchCommand implements AnalysisCommand {
         InputStream is = urlCon.getInputStream();
         String redirLink = urlCon.getURL().toString();
 
-        urlsToSelect.put(counter, redirLink);
         Document doc = Jsoup.connect(redirLink).ignoreContentType(true).get();
 
         List<Element> list = doc.select("meta[name=description]");
@@ -70,7 +72,7 @@ public class GoogleSearchCommand implements AnalysisCommand {
     private void performSearchQuery(Guild guild, MessageChannel msgChan,
                                     Message message, Member member, String[] args) {
         GoogleResults results = null;
-        String google = "http://www.google.com/search?q=";
+        String google = "http://www.google.com/search?q="; //https://www.youtube.com/results?search_query=test
         String search = "";
         String charset = "UTF-8";
         userAgent = "TreeBot";
@@ -81,7 +83,6 @@ public class GoogleSearchCommand implements AnalysisCommand {
         for (int i = 1; i < args.length; i++) {
             search += args[i] + " ";
         }
-//        search = search.replace("+", "%20");
         EmbedBuilder embed = new EmbedBuilder().setDescription("**Search results for \"" + search + "\": **");
 
         try {
@@ -102,6 +103,7 @@ public class GoogleSearchCommand implements AnalysisCommand {
                 printResult(embed, link, guild, msgChan, message, member, args);
             }
         } catch (Exception e) {
+            LoggerUtil.logError(e, log, message);
             e.printStackTrace();
             return;
         }
@@ -110,7 +112,6 @@ public class GoogleSearchCommand implements AnalysisCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        urlsToSelect = new HashMap<>();
         performSearchQuery(guild, msgChan, message, member, args);
     }
 

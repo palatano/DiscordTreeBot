@@ -1,5 +1,7 @@
 package tree;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
 import tree.event.TreeListener;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
@@ -16,11 +18,14 @@ public abstract class TreeMain extends ListenerAdapter {
     private TreeBot treeBot;
     private static TreeListener listener;
     private static final List<TreeMain> shards = new ArrayList<>();
+    private static Logger log = LoggerFactory.getLogger(TreeMain.class);
 
     public static void main(String[] args)
             throws LoginException, RateLimitedException, InterruptedException {
+        log.info(">>>>>>>> TreeMain Start <<<<<<<<");
         /* Get the credentials file. */
         Config.setUpConfig(args);
+        log.info("Configuration is complete.");
         listener = new TreeListener();
         TreeBot.setUp();
         addListener(listener);

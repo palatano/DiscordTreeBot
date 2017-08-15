@@ -1,5 +1,9 @@
 package tree.commandutil.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tree.TreeMain;
+import tree.command.util.music.AudioPlayerAdapter;
 import tree.commandutil.type.AbstractCommandFactory;
 import tree.commandutil.type.Command;
 import tree.commandutil.type.FactoryProducer;
@@ -14,7 +18,12 @@ import java.util.Map;
 public class CommandInit {
     private static final String[] textCommands = {"test", "commands"};
     private static final String[] pictureCommands = {"nugget"};
-    private static final String[] analysisCommands = {"joindate", "uniqueusers", "search"};
+    private static final String[] analysisCommands = {"joindate", "uniqueusers", "search", "ping", "youtube"};
+    private static final String[] voiceCommands = {"voicesearch"};
+    private static final String[] musicCommands = {"add", "skip", "pause", "list", "unpause",
+            "leave", "join", "musicCommands", "cnl", "req", "undo"};
+
+    private static Logger log = LoggerFactory.getLogger(CommandInit.class);
 
     public static void addCommands(Map<String, Command> commandList) {
         // Add all of the text commands first.
@@ -37,5 +46,23 @@ public class CommandInit {
             commandList.put(currCommand.getCommandName(), currCommand);
         }
 
+        // Next, add the analysis commands.
+        abstractFactory = FactoryProducer.getFactory("VOICE");
+        for (String voiceCommand : voiceCommands) {
+            Command currCommand = abstractFactory.getVoiceCommand(voiceCommand);
+            commandList.put(currCommand.getCommandName(), currCommand);
+        }
+
+        // Next, add the analysis commands.
+        abstractFactory = FactoryProducer.getFactory("MUSIC");
+        for (String musicCommand : musicCommands) {
+            Command currCommand = abstractFactory.getMusicCommand(musicCommand);
+            commandList.put(currCommand.getCommandName(), currCommand);
+        }
+
+        // Init the music player. TODO: Move somewhere else.
+        AudioPlayerAdapter.init();
+
+        log.info("All commands successfully initialized.");
     }
 }

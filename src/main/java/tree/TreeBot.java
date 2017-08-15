@@ -1,5 +1,7 @@
 package tree;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
 import tree.event.TreeListener;
 import net.dv8tion.jda.core.AccountType;
@@ -15,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class TreeBot extends TreeMain {
     private TreeListener listener;
     private static JDA jda;
+    private static Logger log = LoggerFactory.getLogger(TreeBot.class);
 
     private static OkHttpClient.Builder setupBuilder(OkHttpClient.Builder builder) {
         builder = builder.connectTimeout(60000, TimeUnit.MILLISECONDS);
@@ -24,6 +27,7 @@ public class TreeBot extends TreeMain {
     }
 
     public TreeBot(int id, TreeListener listener) {
+        log.info("TreeBot #" + id + " has been set up.");
         this.listener = listener;
         jda.addEventListener(listener);
         CommandManager.init();

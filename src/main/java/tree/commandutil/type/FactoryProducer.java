@@ -13,6 +13,10 @@ public class FactoryProducer {
                 return new PictureCommandFactory();
             case "ANALYSIS":
                 return new AnalysisCommandFactory();
+            case "VOICE":
+                return new VoiceCommandFactory();
+            case "MUSIC":
+                return new MusicCommandFactory();
             default:
                 return null;
         }

@@ -1,6 +1,7 @@
 package tree;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -18,7 +19,8 @@ public class Config {
     private static String filePath;
     private static String osName;
     private static long adminID;
-    private Logger logger;
+    private static String youtubeAPIKey;
+    private static boolean isTesting = false;
 
     public Config(String credsFilePath) {
         try {
@@ -29,12 +31,23 @@ public class Config {
             botToken = (String) creds.get("token");
             filePath = (String) creds.get("filePath");
             adminID = (long) creds.get("adminID");
+            youtubeAPIKey = (String) creds.get("youtubeAPIKey");
+            String testing = (String) creds.get("testing");
+            if (testing.equals("yes")) {
+                isTesting = true;
+            } else {
+                isTesting = false;
+            }
             osName = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
 
         } catch (IOException e) {
             System.out.println("File cannot be opened. Exception: " + e + ".");
             throw new NullPointerException();
         }
+    }
+
+    public boolean isTesting() {
+        return isTesting;
     }
 
     public static boolean setUpConfig(String[] parameters) {
@@ -61,6 +74,11 @@ public class Config {
     public static String getOsName() {
         return osName;
     }
+
+    public static String getYoutubeAPIKey() {
+        return youtubeAPIKey;
+    }
+
 
 
 }

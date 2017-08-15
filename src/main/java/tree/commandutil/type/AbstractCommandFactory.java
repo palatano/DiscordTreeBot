@@ -10,4 +10,8 @@ public abstract class AbstractCommandFactory {
     public abstract PictureCommand getPictureCommand(String pictureType);
 
     public abstract AnalysisCommand getAnalysisCommand(String analysisType);
+
+    public abstract VoiceCommand getVoiceCommand(String voiceType);
+
+    public abstract MusicCommand getMusicCommand(String musicType);
 }

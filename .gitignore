@@ -1,0 +1,7 @@
+logs/*
+logs
+.git
+.git/*
+.idea
+.idea/*
+dependency-reduced-pom.xml

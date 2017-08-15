@@ -1,20 +1,17 @@
 package tree.commandutil.type;
 
-import tree.command.picture.NuggetCommand;
+import tree.command.text.CommandsCommand;
+import tree.command.text.TestCommand;
+import tree.command.voice.VoiceSearchCommand;
 
 /**
- * Created by Valued Customer on 7/31/2017.
+ * Created by Valued Customer on 8/4/2017.
  */
-public class PictureCommandFactory extends AbstractCommandFactory {
+public class VoiceCommandFactory extends AbstractCommandFactory {
 
     @Override
     public PictureCommand getPictureCommand(String pictureType) {
-        switch (pictureType) {
-            case "nugget":
-                return new NuggetCommand("nugget");
-            default:
-                return null;
-        }
+        throw new UnsupportedClassVersionError();
     }
 
     @Override
@@ -29,7 +26,12 @@ public class PictureCommandFactory extends AbstractCommandFactory {
 
     @Override
     public VoiceCommand getVoiceCommand(String voiceType) {
-        throw new UnsupportedClassVersionError();
+        switch (voiceType) {
+            case "voicesearch":
+                return new VoiceSearchCommand("voicesearch");
+            default:
+                return null;
+        }
     }
 
     @Override

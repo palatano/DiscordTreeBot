@@ -1,5 +1,8 @@
 package tree.event;
 
+import net.dv8tion.jda.core.events.guild.GenericGuildEvent;
+import net.dv8tion.jda.core.events.message.GenericMessageEvent;
+import tree.Config;
 import tree.commandutil.CommandManager;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
@@ -10,27 +13,36 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
  * Created by Admin on 7/29/2017.
  */
 public class TreeListener extends ListenerAdapter {
+    private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L, 337641574249005065L};
 
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (event.getTextChannel() == null) {
+        if (event == null || event.getChannel() == null) {
             return;
         }
-//        if (!testingOnly(event.getTextChannel())) {
-//            return;
-//        }
-        if (!inBotChannel(event)) {
-            return;
+        // If testing only, only allow commands in testing server.
+        if (Config.CONFIG.isTesting()) {
+            if (!testingOnly(event.getTextChannel())) {
+                return;
+            }
+        } else {
+            if (!inBotChannel(event) && !inMusicChannel(event) && !inMusicBetaChannel(event)) {
+                return;
+            }
         }
         Message msg = event.getMessage();
-        if (!msg.getContent().startsWith("&")) {
+        if (!msg.getContent().startsWith(";")) {
             return;
         }
-        // Get tree.event text, and then transform it to tree.command to be send to tree.command manager.
         CommandManager.messageCommand(msg);
     }
 
     private boolean testingOnly(MessageChannel msgChan) {
-        return msgChan.getId().equals("337641574249005065");
+        for (long id : TESTING_CHANNELS) {
+            if (msgChan.getIdLong() == id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean inBotChannel(MessageReceivedEvent event) {
@@ -38,6 +50,24 @@ public class TreeListener extends ListenerAdapter {
             return event.getTextChannel()
                     .getId()
                     .equals("249791455592316930");
+        }
+        return true;
+    }
+
+    private boolean inMusicChannel(MessageReceivedEvent event) {
+        if (event.getGuild().getName().equals("/r/trees")) {
+            return event.getTextChannel()
+                    .getId()
+                    .equals("269577202016845824");
+        }
+        return true;
+    }
+
+    private boolean inMusicBetaChannel(MessageReceivedEvent event) {
+        if (event.getGuild().getName().equals("/r/trees")) {
+            return event.getTextChannel()
+                    .getId()
+                    .equals("346493255896268802");
         }
         return true;
     }

@@ -27,18 +27,17 @@ import java.util.TimerTask;
  */
 public class NuggetCommand implements PictureCommand {
     String commandName;
-    private static final int NUMBER_NUG_PHOTOS = 20;
+    private static final int NUMBER_NUG_PHOTOS = 21;
     private static final String[] fileExtensions = {".jpg", ".gif", ".png"};
     private static final int SPAM_NUG_COUNT = 5;
     private PriorityQueue<Pair<Integer, Integer>> photoIDsPosted;
     private int numNugCount = 0;
     private boolean nugPicAllowed = true;
     private StopWatch nuggetStopWatch;
+    private Timer timer;
 
     private void timerInitialize() {
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 nugPicAllowed = true;
@@ -63,6 +62,7 @@ public class NuggetCommand implements PictureCommand {
         photoIDsPosted = new PriorityQueue<>(Comparator.comparing(Pair::getValue));
         nuggetStopWatch = new StopWatch();
         nuggetStopWatch.start();
+        timer = new Timer();
         timerInitialize();
     }
 

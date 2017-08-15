@@ -34,7 +34,7 @@ public class JoinDateCommand implements AnalysisCommand {
                         return 1;
                     }
                 }
-                sendError("Wrap the name to search with <>. For example, &datejoin <palat>", msgChan);
+                sendError("Wrap the name to search with <>. For example, &joindate <palat>", msgChan);
                 return 0;
             } else if (c == '>') {
                 sendError("Wrap the name to search with <>. For example, &joindate <palat>", msgChan);
@@ -103,7 +103,7 @@ public class JoinDateCommand implements AnalysisCommand {
 
         // Check if valid number of arguments:
         if (memberStringCommand.length == 1) {
-            sendError("No parameter (name) entered after &joindate tree.command.", msgChan);
+            sendError("No parameter (name) entered after &joindate command.", msgChan);
             return;
         }
 

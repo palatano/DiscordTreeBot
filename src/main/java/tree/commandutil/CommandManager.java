@@ -1,11 +1,15 @@
 package tree.commandutil;
 
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tree.TreeMain;
 import tree.command.util.MessageUtil;
 import tree.commandutil.type.Command;
 import tree.commandutil.type.TextCommand;
 import tree.commandutil.util.CommandRegistry;
 import net.dv8tion.jda.core.entities.*;
+import tree.util.LoggerUtil;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,14 +18,8 @@ import java.util.TimerTask;
  * Created by Admin on 7/28/2017.
  */
 public class CommandManager {
-    private static final String[] channelIDList = {"249764885246902272", "247929469552033792",
-            "269577202016845824", "247135478069854209", "247248468626636800",
-            "248243893273886720", "247134894558281730"};
-    private static final String[] rulesInfo = {"247109092567547905"};
-    private static final String[] adminCommands = {"uniqueusers"};
-    private static boolean followUpCommand = false;
-    private boolean nugPicAllowed = true;
-    private int numNugCount = 0;
+    public static final String[] adminCommands = {"uniqueusers"};
+    private static Logger log = LoggerFactory.getLogger(CommandManager.class);
 
     public static void init() {
         CommandRegistry.setCommandRegistry();
@@ -48,12 +46,12 @@ public class CommandManager {
         String msgText = message.getContent();
         String[] args = CommandParser.parseMessage(msgText);
         if (args == null) {
-            System.out.println("Command not found.");
+            LoggerUtil.logMessage(log, message, "Command not found.");
             return false;
         }
         Command command = CommandRegistry.getCommand(args[0]);
         if (command == null) {
-            System.out.println("Error retrieving command from the list.");
+            LoggerUtil.logMessage(log, message, "Error retrieving command from the list.");
             return false;
         }
         // Ensure that the user doesnt use an admin command.
@@ -61,11 +59,8 @@ public class CommandManager {
             return false;
         }
         command.execute(message.getGuild(), message.getChannel(), message, message.getMember(), args);
-        return false;
+        LoggerUtil.logMessage(log, message, command.getCommandName() + " executed.");
+        return true;
     }
 
-
-    private void sendPrivateMessage(String s, User user) {
-
-    }
 }
