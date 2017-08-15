@@ -3,7 +3,7 @@ package tree.command.analysis;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.services.youtube.*;
+import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
@@ -157,13 +157,13 @@ public class YoutubeCommand implements AnalysisCommand {
                                     String query, MessageChannel msgChan) {
         EmbedBuilder embed = new EmbedBuilder();
         String messageString = "";
-
         if (!iteratorSearchResults.hasNext()) {
             System.out.println("No more results found.");
             MessageUtil.sendError("No more results found.", msgChan);
         }
 
         while (iteratorSearchResults.hasNext()) {
+
             SearchResult singleVideo = iteratorSearchResults.next();
             ResourceId rId = singleVideo.getId();
 
@@ -175,6 +175,7 @@ public class YoutubeCommand implements AnalysisCommand {
             }
         }
         msgChan.sendMessage(messageString).queue();
+
     }
 
     @Override

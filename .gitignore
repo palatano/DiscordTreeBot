@@ -3,5 +3,7 @@ logs
 .git
 .git/*
 .idea
-.idea/*
+.idea/libraries/*.*
 dependency-reduced-pom.xml
+target
+target/*

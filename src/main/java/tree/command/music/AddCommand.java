@@ -49,6 +49,159 @@ public class AddCommand implements MusicCommand {
     private ScheduledFuture<?> menuSelectionTask;
     private static final String[] AUTHORIZED_ROLES = {"Discord DJ", "Tester", "Moderator"};
 
+    private int youtubeSearch(String query, Guild guild, MessageChannel msgChan, Message message, Member member) {
+
+        try {
+            counter = 0;
+            // This object is used to make YouTube Data API requests. The last
+            // argument is required, but since we don't need anything
+            // initialized when the HttpRequest is initialized, we override
+            // the interface and provide a no-op function.
+            youtube = new YouTube.Builder(AuthUtil.HTTP_TRANSPORT, AuthUtil.JSON_FACTORY, new HttpRequestInitializer() {
+                public void initialize(HttpRequest request) throws IOException {
+                }
+            }).setApplicationName("TreeBot").build();
+
+            YouTube.Search.List search = youtube.search().list("id,snippet");
+            initializeSearchFields(search, query);
+
+            // Fetch the search results.
+            SearchListResponse searchResponse = search.execute();
+            List<SearchResult> resultList = searchResponse.getItems();
+            if (resultList.isEmpty() || resultList == null) {
+                System.out.println(" There aren't any results for your query.");
+                MessageUtil.sendError("No results are found", msgChan);
+                return -1;
+            }
+
+            // If the user entered a URL, there should be only one selection AND it should only be youtube.
+            if (query.contains(".com")) {
+                if (query.contains("youtu")) {
+                    if (!authorizedUser(guild, member)) {
+                        message.addReaction("\u274E").queue();
+                        return -1;
+                    }
+                    // Just add the first (and only) song given with the URL.
+                    addSong(guild, msgChan, message, member, query);
+                    message.addReaction("\u2705").queue();
+                } else {
+                    System.out.println(" There aren't any results for your query.");
+                    MessageUtil.sendError("No results are found", msgChan);
+                    message.addReaction("\u274E").queue();
+                }
+                return -1;
+            }
+
+            // Create an iterator for the results, and then merge into a list.
+            Iterator<SearchResult> iteratorSearchResults = resultList.iterator();
+            EmbedBuilder embed = new EmbedBuilder();
+            String messageString = "Authorized users, type ``;req n`` to select the song, where ``n`` is your choice. \n\n";
+
+            while (iteratorSearchResults.hasNext()) {
+                SearchResult singleVideo = iteratorSearchResults.next();
+                ResourceId rId = singleVideo.getId();
+
+                // Confirm that the result represents a video. Otherwise, the
+                // item will not contain a video ID.
+                if (rId.getKind().equals("youtube#video")) {
+                    messageString += getMessageString(singleVideo, rId) + "\n";
+                }
+            }
+            Message songListMessage = new MessageBuilder().append(messageString).build();
+            menuMessageGuildMap.put(guild.getIdLong(), message.getIdLong());
+            msgChan.sendMessage(songListMessage).queue(m -> {
+                        menuMessageGuildMap.put(guild.getIdLong(), m.getIdLong());
+                    }
+            );
+            waitingForChoice = true;
+
+        } catch (GoogleJsonResponseException e) {
+            System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
+                    + e.getDetails().getMessage());
+        } catch (IOException e) {
+            System.err.println("There was an IO error: " + e.getCause() + " : " + e.getMessage());
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return 0;
+    }
+
+    private void initializeSearchFields(YouTube.Search.List search, String query) {
+        // Define the API request for retrieving search results.
+
+        String apiKey = youtubeAPIKey;
+        search.setKey(apiKey);
+        search.setQ(query);
+        search.setSafeSearch("moderate");
+        search.setType("video");
+
+        // To increase efficiency, only retrieve the fields that the
+        // application uses.
+        search.setFields("items(snippet/channelTitle,id/kind,id/videoId,snippet/title," +
+                "snippet/thumbnails/default/url,snippet/description)");
+        search.setMaxResults(4L);
+
+    }
+
+    @Deprecated
+    private static EmbedBuilder getMessageEmbed(SearchResult singleVideo, ResourceId rId, EmbedBuilder embed) {
+        String result = "";
+        String author = singleVideo.getSnippet().getChannelTitle();
+        String videoTitle = singleVideo.getSnippet().getTitle();
+        String desc = singleVideo.getSnippet().getDescription();
+
+        String beginning = videoTitle;
+        String channel = ++counter + ") " + "Channel: " + author;
+        String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();
+        result += "Video result: " + url;
+        embed.setTitle(channel);
+        embed.setDescription("[" + beginning + "](" + url + ")");
+        embed.appendDescription("\n" + "**Video description: **" + desc);
+        Thumbnail thumbnail = singleVideo.getSnippet().getThumbnails().getDefault();
+        embed.setThumbnail(thumbnail.getUrl());
+        if (counter == 1) {
+            embed.addField("Not the video you wanted?", "Type \"&youtube next\" for more"  +
+                    " (Up to two more).", true);
+        }
+        return embed;
+    }
+
+
+    /*
+ * Prints out all results in the Iterator. For each result, print the
+ * title, video ID, and thumbnail.
+ *
+ * @param iteratorSearchResults Iterator of SearchResults to print
+ *
+ * @param query Search query (String)
+ */
+    private static void getNextResult(Iterator<SearchResult> iteratorSearchResults,
+                                      String query, MessageChannel msgChan) {
+        EmbedBuilder embed = new EmbedBuilder();
+        String messageString = "";
+        if (!iteratorSearchResults.hasNext()) {
+            System.out.println("No more results found.");
+            MessageUtil.sendError("No more results found.", msgChan);
+        }
+
+        while (iteratorSearchResults.hasNext()) {
+
+            SearchResult singleVideo = iteratorSearchResults.next();
+            ResourceId rId = singleVideo.getId();
+
+            // Confirm that the result represents a video. Otherwise, the
+            // item will not contain a video ID.
+            if (rId.getKind().equals("youtube#video")) {
+                messageString = getMessageString(singleVideo, rId);
+                break;
+            }
+        }
+    }
+
+
+
+
+
     private void createScheduler(Guild guild, MessageChannel msgChan, Message message, Member member) {
         Runnable runnable = new Runnable() {
             @Override
