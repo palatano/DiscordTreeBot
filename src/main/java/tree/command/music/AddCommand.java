@@ -68,8 +68,8 @@ public class AddCommand implements MusicCommand {
 
         scheduler = Executors
                 .newScheduledThreadPool(1);
-//        menuSelectionTask = scheduler.schedule(
-//                runnable, 12, TimeUnit.SECONDS);
+        menuSelectionTask = scheduler.schedule(
+                runnable, 12, TimeUnit.SECONDS);
     }
 
     public void resetSongsToChoose() {

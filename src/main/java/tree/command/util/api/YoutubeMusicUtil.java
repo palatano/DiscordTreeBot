@@ -7,26 +7,18 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
-import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import tree.command.music.AddCommand;
 import tree.command.util.AuthUtil;
 import tree.command.util.MenuUtil;
 import tree.command.util.MessageUtil;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -103,8 +95,8 @@ public class YoutubeMusicUtil {
                 }
             }
             Message songListMessage = new MessageBuilder().append(messageString).build();
-            menuUtil.setMenuId(msgChan.getIdLong(), message.getIdLong());
-            msgChan.sendMessage(songListMessage).queue(m -> menuUtil.setUserId(msgChan.getIdLong(), m.getIdLong()));
+//            menuUtil.setMenuId(msgChan.getIdLong(), message.getIdLong());
+            msgChan.sendMessage(songListMessage).queue(m -> menuUtil.setMenuId(msgChan.getIdLong(), m.getIdLong()));
             waitingForChoice.set(true);
             menuUtil.setUserId(msgChan.getIdLong(), member.getUser().getIdLong());
         } catch (GoogleJsonResponseException e) {
