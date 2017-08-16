@@ -23,7 +23,7 @@ public class GuildMusicManager {
      */
     public GuildMusicManager(AudioPlayerManager manager) {
         player = manager.createPlayer();
-        player.setVolume(20);
+        player.setVolume(50);
         scheduler = new TrackScheduler(player);
         player.addListener(scheduler);
     }

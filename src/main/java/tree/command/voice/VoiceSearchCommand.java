@@ -12,7 +12,6 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.managers.AudioManager;
 import net.dv8tion.jda.core.managers.impl.AudioManagerImpl;
-import net.sourceforge.javaflacencoder.FLACFileWriter;
 import tree.command.util.speech.AudioReceiveListener;
 import tree.command.util.speech.AudioSendHandler;
 import tree.commandutil.type.AnalysisCommand;

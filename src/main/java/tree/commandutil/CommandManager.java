@@ -20,6 +20,7 @@ import java.util.TimerTask;
 public class CommandManager {
     public static final String[] adminCommands = {"uniqueusers"};
     private static Logger log = LoggerFactory.getLogger(CommandManager.class);
+    public static final String botToken = ";";
 
     public static void init() {
         CommandRegistry.setCommandRegistry();

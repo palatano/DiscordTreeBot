@@ -2,7 +2,6 @@ package tree.command.util.speech;
 
 
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.cloud.speech.spi.v1.SpeechClient;
 import com.google.cloud.speech.v1.*;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;

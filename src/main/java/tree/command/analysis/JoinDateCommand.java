@@ -4,7 +4,9 @@ import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import tree.command.util.MessageUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
+import tree.commandutil.type.Command;
 
 import java.text.DateFormatSymbols;
 import java.time.OffsetDateTime;
@@ -34,10 +36,16 @@ public class JoinDateCommand implements AnalysisCommand {
                         return 1;
                     }
                 }
-                sendError("Wrap the name to search with <>. For example, &joindate <palat>", msgChan);
+                sendError("Wrap the name to search with <>. For example, " +
+                        CommandManager.botToken +
+                        getCommandName() +
+                        " <palat>", msgChan);
                 return 0;
             } else if (c == '>') {
-                sendError("Wrap the name to search with <>. For example, &joindate <palat>", msgChan);
+                sendError("Wrap the name to search with <>. For example, " +
+                        CommandManager.botToken +
+                        getCommandName() +
+                        " <palat>", msgChan);
                 return 0;
             }
         }
@@ -84,8 +92,11 @@ public class JoinDateCommand implements AnalysisCommand {
         } else {
             // More than one match found. Menu needed.
             int currIndex = 1;
-            String menuSelection = "Multiple users found. Please select the option with the correct user," +
-                    " typing &datejoin n, where n is your option:\n";
+            String menuSelection = "Multiple users found. Please select the option" +
+                    " with the correct user, typing " +
+                    CommandManager.botToken +
+                    getCommandName() +
+                    " n, where n is your option:\n";
             for (Member currMember : memberList) {
                 User user = currMember.getUser();
                 menuSelection += Integer.toString(currIndex++) + ": " + user.getName() +
@@ -103,7 +114,10 @@ public class JoinDateCommand implements AnalysisCommand {
 
         // Check if valid number of arguments:
         if (memberStringCommand.length == 1) {
-            sendError("No parameter (name) entered after &joindate command.", msgChan);
+            sendError("No parameter (name) entered after " +
+                    CommandManager.botToken +
+                    getCommandName() +
+                    " command.", msgChan);
             return;
         }
 
@@ -134,7 +148,10 @@ public class JoinDateCommand implements AnalysisCommand {
                 parameters = memberStringCommand[1].split(">");
                 if (parameters.length > 1) {
                     sendError("Only one parameter (name) at a time. If you have a name with spaces," +
-                            " surround the name with <>. e.g. &joindate <palat>", msgChan);
+                            " surround the name with <>. e.g. " +
+                            CommandManager.botToken +
+                            getCommandName() +
+                            " <palat>", msgChan);
                     return;
                 }
                 memberString = parameters[0].replaceAll("<", "")
@@ -147,7 +164,10 @@ public class JoinDateCommand implements AnalysisCommand {
                 parameters = memberStringCommand[1].split(" ");
                 if (parameters.length > 1) {
                     sendError("Only one parameter (name) at a time. If you have a name with spaces," +
-                            " surround the name with <>. e.g. &joindate <palat>", msgChan);
+                            " surround the name with <>. e.g. " +
+                            CommandManager.botToken +
+                            getCommandName() +
+                            " <palat>", msgChan);
                     return;
                 }
                 memberString = parameters[0].replaceAll("<", "").
