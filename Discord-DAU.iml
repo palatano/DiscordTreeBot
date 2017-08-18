@@ -11,27 +11,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="RUNTIME" name="Maven: org.jsoup:jsoup:1.10.1" level="project" />
-    <orderEntry type="library" name="org.jsoup:jsoup:1.10.3" level="project" />
+    <orderEntry type="library" name="org.jsoup:jsoup:1.10.31" level="project" />
     <orderEntry type="library" name="commons-io-2.5" level="project" />
-    <orderEntry type="library" name="net.sourceforge.javaflacencoder:java-flac-encoder:0.3.7" level="project" />
-    <orderEntry type="library" name="org.slf4j:slf4j-log4j12:1.7.25" level="project" />
-    <orderEntry type="library" name="google-api-client-1.22.0" level="project" />
-    <orderEntry type="library" name="com.google.oauth-client:google-oauth-client-jetty:1.22.0" level="project" />
-    <orderEntry type="library" name="org.apache.poi:poi:3.16" level="project" />
-    <orderEntry type="library" name="org.apache.maven.plugins:maven-compiler-plugin:2.0.2" level="project" />
-    <orderEntry type="library" name="guava-r05 (1)" level="project" />
-    <orderEntry type="library" name="google-api-services-youtube-v3-rev183-1.22.0-sources" level="project" />
-    <orderEntry type="library" name="org.yaml:snakeyaml:1.18" level="project" />
-    <orderEntry type="library" name="net.sourceforge.javaflacencoder:java-flac-encoder:0.3.71" level="project" />
-    <orderEntry type="library" name="org.apache.poi:poi-ooxml:3.16" level="project" />
     <orderEntry type="library" name="log4j:apache-log4j-extras:1.2.17" level="project" />
-    <orderEntry type="library" name="maven-shade-plugin-3.0.0" level="project" />
-    <orderEntry type="library" name="com.google.guava:guava:r09" level="project" />
-    <orderEntry type="library" name="google-cloud-0.21.1-alpha" level="project" />
-    <orderEntry type="library" name="google-cloud-speech-0.17.1-alpha" level="project" />
     <orderEntry type="library" name="org.slf4j:slf4j-api:1.7.25" level="project" />
-    <orderEntry type="library" name="Maven: mysql:mysql-connector-java:5.1.43" level="project" />
+    <orderEntry type="library" name="org.slf4j:slf4j-log4j12:1.7.25" level="project" />
+    <orderEntry type="library" name="log4j:log4j:1.2.17" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Maven: com.google.api-client:google-api-client:1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client:1.22.0" level="project" />
@@ -40,11 +25,11 @@
     <orderEntry type="library" name="Maven: com.google.http-client:google-http-client-jackson2:1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava-jdk5:17.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:r05" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
-    <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.25" level="project" />
-    <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
-    <orderEntry type="library" name="Maven: log4j:apache-log4j-extras:1.2.17" level="project" />
     <orderEntry type="library" name="Maven: org.jsoup:jsoup:1.10.3" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.25" level="project" />
+    <orderEntry type="library" name="Maven: log4j:apache-log4j-extras:1.2.17" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client-jetty:1.11.0-beta" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client-java6:1.11.0-beta" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:jetty:6.1.26" level="project" />
