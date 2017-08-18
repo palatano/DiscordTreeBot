@@ -14,6 +14,7 @@ import net.dv8tion.jda.core.managers.AudioManager;
 import net.dv8tion.jda.core.managers.impl.AudioManagerImpl;
 import tree.command.util.speech.AudioReceiveListener;
 import tree.command.util.speech.AudioSendHandler;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 import tree.commandutil.type.VoiceCommand;
 
@@ -48,7 +49,10 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     @Override
     public String help() {
-        return "Type &voicesearch to say something and get results from google.";
+        return "Type " +
+                CommandManager.botToken +
+                getCommandName() +
+                " to say something and get results from google.";
     }
 
     @Override
@@ -60,8 +64,6 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     private void search(Guild guild, MessageChannel msgChan) {
         AudioManager audioManager = guild.getAudioManager();
-        //AudioManager audioManager = guild.getAudioManager();
-        //audioManager
         audioManager.setReceivingHandler(new AudioReceiveListener(1.0, guild.getVoiceChannelById(314495018079617026L)));
         AudioReceiveListener ah = (AudioReceiveListener) guild.getAudioManager().getReceiveHandler();
         audioManager.openAudioConnection(guild.getVoiceChannelById(314495018079617026L));

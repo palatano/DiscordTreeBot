@@ -1,5 +1,6 @@
 package tree;
 
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
@@ -9,6 +10,7 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
 import okhttp3.OkHttpClient;
 
+import javax.security.auth.login.LoginException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,7 +35,7 @@ public class TreeBot extends TreeMain {
         CommandManager.init();
     }
 
-    public static JDA setUp() {
+    public static JDA setUp() throws LoginException, RateLimitedException, InterruptedException {
         try {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             jda = new JDABuilder(AccountType.BOT)

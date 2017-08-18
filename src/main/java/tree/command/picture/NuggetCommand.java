@@ -17,34 +17,25 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Admin on 7/31/2017.
  */
 public class NuggetCommand implements PictureCommand {
-    String commandName;
-    private static final int NUMBER_NUG_PHOTOS = 21;
+    private String commandName;
+    private static final int NUMBER_NUG_PHOTOS = 6;
     private static final String[] fileExtensions = {".jpg", ".gif", ".png"};
     private static final int SPAM_NUG_COUNT = 5;
-    private PriorityQueue<Pair<Integer, Integer>> photoIDsPosted;
+    private PriorityQueue<Pair<Integer, Long>> photoIDsPosted;
     private int numNugCount = 0;
     private boolean nugPicAllowed = true;
     private StopWatch nuggetStopWatch;
-    private Timer timer;
-
-    private void timerInitialize() {
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                nugPicAllowed = true;
-                numNugCount = 0;
-            }
-        }, 0, 30000);
-    }
+    private Set<Integer> pastIDs;
+    private ScheduledExecutorService scheduler;
 
     private String getOSNuggetPath() {
         String osName = Config.getOsName();
@@ -62,8 +53,12 @@ public class NuggetCommand implements PictureCommand {
         photoIDsPosted = new PriorityQueue<>(Comparator.comparing(Pair::getValue));
         nuggetStopWatch = new StopWatch();
         nuggetStopWatch.start();
-        timer = new Timer();
-        timerInitialize();
+        pastIDs = new HashSet<>();
+        scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() -> {
+                nugPicAllowed = true;
+                numNugCount = 0;
+            },0, 30, TimeUnit.SECONDS);
     }
 
     @Override
@@ -104,24 +99,21 @@ public class NuggetCommand implements PictureCommand {
 
     private int getRandomID() {
         int rand = (int) Math.ceil(Math.random() * NUMBER_NUG_PHOTOS);
-        for (Pair p : photoIDsPosted) {
-            int ID = (int) p.getKey();
-            if (rand == ID) {
-                return getRandomID();
-            }
+        if (pastIDs.contains(rand)) {
+            return getRandomID();
         }
         return rand;
     }
 
     private void incrementNuggetCount() {
-        if (++numNugCount >= 5) {
+        if (++numNugCount >= SPAM_NUG_COUNT) {
             nugPicAllowed = false;
         }
     }
 
 
     public void writeRandomNugPhoto(MessageChannel msgChan) {
-        incrementNuggetCount();
+        incrementNuggetCount(); //TODO: Figure out why some files can't be sent.
         int rand = getRandomID();
         String nugFilePath = Config.CONFIG.getFilePath() + getOSNuggetPath();
         String nugFileName = "nug" + rand;
@@ -133,15 +125,19 @@ public class NuggetCommand implements PictureCommand {
                 // consecutive times, keep track of photo IDs.
                 if (photoIDsPosted.size() >= 5) {
                     Pair p = photoIDsPosted.poll();
+                    pastIDs.remove(p.getKey());
                     System.out.println("ID = " + p.getKey() + "time = " + p.getValue());
                 }
-                photoIDsPosted.offer(new Pair(rand, (int) nuggetStopWatch.getTime()));
+                photoIDsPosted.offer(new Pair(rand, System.currentTimeMillis()));
+                pastIDs.add(rand);
                 outputNugFile = new File(nugFilePath + nugFileName + ext).getAbsoluteFile();
                 convertAndSendImage(outputNugFile, msgChan);
                 return;
             }
         }
-        System.out.println("No files found with extensions" + fileExtensions.toString());
+        System.out.println("No files found with the given extension.");
+        numNugCount--;
+        writeRandomNugPhoto(msgChan);
     }
 
     private boolean convertAndSendImage(File outputNugFile, MessageChannel msgChan) {
@@ -166,7 +162,9 @@ public class NuggetCommand implements PictureCommand {
             baos.close();
 
             Message msg = new MessageBuilder().append(" ").build();
-            msgChan.sendFile(nugToDiscord, msg).queue();
+            msgChan.sendFile(nugToDiscord, msg).queue((m) -> {},
+                    (m) -> msgChan.sendMessage("You are being rate limited" +
+                    " for too many nugget requests.").queueAfter(2, TimeUnit.SECONDS));
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("File could not be created.");

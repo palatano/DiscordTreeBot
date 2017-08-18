@@ -23,6 +23,7 @@ import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 import tree.command.util.music.TrackScheduler;
 import tree.commandutil.type.MusicCommand;
+import tree.commandutil.util.CommandRegistry;
 import tree.util.LoggerUtil;
 
 import java.io.IOException;
@@ -40,52 +41,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AddCommand implements MusicCommand {
     private String commandName;
     private YoutubeMusicUtil ytUtil;
-    private AudioPlayerAdapter audioPlayer;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
     private static AtomicInteger counter;
     private AtomicBoolean waitingForChoice;
     private static List<String> songsToChoose;
-    private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> menuSelectionTask;
 
-    private void createScheduler(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                ytUtil.getMenuUtil().removeUserId(msgChan.getIdLong());
-                waitingForChoice.set(false);
+    private Runnable createRunnable(Guild guild, MessageChannel msgChan, Member member) {
+        return () -> {
                 // If no choice has been selected, pick the first song to add.
-                String url = "";
                 if (!songsToChoose.isEmpty()) {
-                    url = songsToChoose.get(0);
-                } else {
-                    return;
+                    String url = songsToChoose.get(0);
+                    ytUtil.addSong(guild, msgChan, commandName, member, url);
                 }
-                ytUtil.addSong(guild, msgChan, message, member, url);
-                songsToChoose = new ArrayList<>();
-            }
+                reset(msgChan);
+                ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
         };
-
-        scheduler = Executors
-                .newScheduledThreadPool(1);
-        menuSelectionTask = scheduler.schedule(
-                runnable, 12, TimeUnit.SECONDS);
     }
 
-    public void resetSongsToChoose() {
+    public void reset(MessageChannel msgChan) {
         songsToChoose = new ArrayList<>();
+        waitingForChoice.set(false);
+        if (menuSelectionTask.isCancelled() || menuSelectionTask.isDone()) {
+            menuSelectionTask.cancel(true);
+        }
     }
 
     public boolean hasMenu() {
         return waitingForChoice.get();
-    }
-
-    public ScheduledFuture<?> getMenuSelectionTask() {
-        return menuSelectionTask;
-    }
-
-    public AtomicBoolean isWaitingForChoice() {
-        return waitingForChoice;
     }
 
     // Race condition. Save the userID who entered the search query first. Let them choose it for 7 seconds
@@ -93,7 +76,6 @@ public class AddCommand implements MusicCommand {
 
     public AddCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
         songsToChoose = new ArrayList<>();
         ytUtil = YoutubeMusicUtil.getInstance();
         counter = new AtomicInteger(0);
@@ -109,8 +91,13 @@ public class AddCommand implements MusicCommand {
             return;
         }
 
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
+        }
+
         String search = ytUtil.getQuery(args);
-        if (!ytUtil.authorizedUser(guild, member)) {
+        if (!ytUtil.authorizedUser(guild, member)) { // || ytUtil.menuIsOpen(this, msgChan)
             message.addReaction("\u274E").queue();
             return;
         }
@@ -122,47 +109,43 @@ public class AddCommand implements MusicCommand {
                 return;
             }
 
-            // Cancel the task if its still running./
-            if (menuSelectionTask != null && scheduler != null) {
-                menuSelectionTask.cancel(true);
-            }
-
             // Return if direct URL search or error has occurred.
             if (ytUtil.youtubeSearch(search, guild, msgChan, message,
                     member, getCommandName(), counter, songsToChoose, waitingForChoice) == -1) {
                 return;
             }
 
-            // Create the task again.
-            if (menuSelectionTask == null || menuSelectionTask.isCancelled() || menuSelectionTask.isDone()) {
-                createScheduler(guild, msgChan, message, member);
-                message.addReaction("\u2705").queue();
-            }
+            menuSelectionTask = ytUtil.getMenuUtil()
+                    .createMenuTask(createRunnable(guild, msgChan, member),
+                            menuSelectionTask, 12);
 
         } else {
             // Path 2: Not user, ignore command and return.
             long userId = member.getUser().getIdLong();
-            long lastUserId = ytUtil.getMenuUtil().getUserId(msgChan.getIdLong());
+            long lastUserId = ytUtil.getMenuUtil().getUserId(commandName, msgChan);
             if (userId != lastUserId) {
                 message.addReaction("\u274E").queue();
                 return;
             }
+
             // Path 3: Not a valid int. Exit query and do not allow searching.
             if (!MessageUtil.checkIfInt(search)) {
                 MessageUtil.sendError("Not a numerical response." +
                         " Please search for the video again.", msgChan);
-                waitingForChoice.set(false);
-                songsToChoose = new ArrayList<>();
-                menuSelectionTask.cancel(true);
+                reset(msgChan);
+                ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
                 return;
             }
+
             // Path 4: Correct user and valid int. Add song.
             int index = Integer.parseInt(search);
             String url = ytUtil.getSongURL(index, msgChan, songsToChoose);
-            ytUtil.addSong(guild, msgChan, message, member, url);
-            menuSelectionTask.cancel(true);
-            waitingForChoice.set(false);
-            message.addReaction("\u2705").queue();
+            if (url == null) {
+                return;
+            }
+            ytUtil.addSong(guild, msgChan, commandName, member, url);
+            reset(msgChan);
+            ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
         }
     }
 

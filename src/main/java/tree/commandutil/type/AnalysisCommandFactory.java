@@ -15,8 +15,8 @@ public class AnalysisCommandFactory extends AbstractCommandFactory {
     @Override
     public AnalysisCommand getAnalysisCommand(String analysisType) {
         switch (analysisType) {
-            case "joindate":
-                return new JoinDateCommand("joindate");
+            case "info":
+                return new InfoCommand("info");
             case "uniqueusers":
                 return new UniqueUserCommand("uniqueusers");
             case "search":

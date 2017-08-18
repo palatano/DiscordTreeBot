@@ -60,7 +60,10 @@ public class CommandsCommand implements TextCommand {
 
     @Override
     public String help() {
-        return "Just type &commands to get the command list sent to you via PM.";
+        return "Just type " +
+                CommandManager.botToken +
+                getCommandName() +
+                " to get the command list sent to you via PM.";
     }
 
     @Override

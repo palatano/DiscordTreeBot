@@ -18,7 +18,7 @@ import java.util.Map;
 public class CommandInit {
     private static final String[] textCommands = {"test", "commands"};
     private static final String[] pictureCommands = {"nugget"};
-    private static final String[] analysisCommands = {"joindate", "uniqueusers", "search", "ping", "youtube"};
+    private static final String[] analysisCommands = {"info", "uniqueusers", "search", "ping", "youtube"};
     private static final String[] voiceCommands = {"voicesearch"};
     private static final String[] musicCommands = {"add", "skip", "pause", "list", "unpause",
             "leave", "join", "musicCommands", "cnl", "req", "undo"};
@@ -41,8 +41,8 @@ public class CommandInit {
         }
         // Next, add the analysis commands.
         abstractFactory = FactoryProducer.getFactory("ANALYSIS");
-        for (String pictureCommand : analysisCommands) {
-            Command currCommand = abstractFactory.getAnalysisCommand(pictureCommand);
+        for (String analysisCommand : analysisCommands) {
+            Command currCommand = abstractFactory.getAnalysisCommand(analysisCommand);
             commandList.put(currCommand.getCommandName(), currCommand);
         }
 
@@ -59,9 +59,6 @@ public class CommandInit {
             Command currCommand = abstractFactory.getMusicCommand(musicCommand);
             commandList.put(currCommand.getCommandName(), currCommand);
         }
-
-        // Init the music player. TODO: Move somewhere else.
-        AudioPlayerAdapter.init();
 
         log.info("All commands successfully initialized.");
     }

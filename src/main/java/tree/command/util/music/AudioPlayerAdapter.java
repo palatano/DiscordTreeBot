@@ -31,10 +31,6 @@ public class AudioPlayerAdapter extends ListenerAdapter {
     private final Map<Long, GuildMusicManager> musicManagers;
     public static final AudioPlayerAdapter audioPlayer = new AudioPlayerAdapter();
 
-    public static void init() {
-
-    }
-
     private AudioPlayerAdapter() {
         this.musicManagers = new HashMap<>();
 
@@ -70,7 +66,8 @@ public class AudioPlayerAdapter extends ListenerAdapter {
         playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``").queue();
+                channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``").queue(m -> m.addReaction("\uD83D\uDC4D").queue());
+
 
                 play(channel.getGuild(), musicManager, track, member);
             }
@@ -107,7 +104,7 @@ public class AudioPlayerAdapter extends ListenerAdapter {
      * @param track
      */
     public void play(Guild guild, GuildMusicManager musicManager, AudioTrack track, Member member) {
-        connectToMusicChannel(guild.getAudioManager());
+        connectToMusicChannel(guild.getAudioManager(), member);
         musicManager.scheduler.queue(track, member);
     }
 
@@ -126,22 +123,8 @@ public class AudioPlayerAdapter extends ListenerAdapter {
      * Connect to the voice channel specified in the audio manager.
      * @param audioManager
      */
-    public static void connectToMusicChannel(AudioManager audioManager) {
-        Guild guild = audioManager.getGuild();
-        if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
-            List<VoiceChannel> voiceChannelList = guild.getVoiceChannelsByName("music", true);
-            if (voiceChannelList.isEmpty()) {
-                System.out.println("No #music channel found.");
-                return;
-            }
-            // For r/trees:
-            if (guild.getName().equals("/r/trees")) {
-                audioManager.openAudioConnection(guild.getVoiceChannelById(346492804316397578L));
-                return;
-            }
-            audioManager.openAudioConnection(voiceChannelList.get(0));
-            return;
-        }
+    public static void connectToMusicChannel(AudioManager audioManager, Member member) {
+        audioManager.openAudioConnection(member.getVoiceState().getChannel());
     }
 
 }

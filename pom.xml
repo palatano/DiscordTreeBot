@@ -20,14 +20,14 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>org.apache.http</pattern>
-                                    <shadedPattern>org.shaded.apache.http</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
+                        <!--<configuration>-->
+                            <!--<relocations>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>org.apache.http</pattern>-->
+                                    <!--<shadedPattern>org.shaded.apache.http</shadedPattern>-->
+                                <!--</relocation>-->
+                            <!--</relocations>-->
+                        <!--</configuration>-->
                     </execution>
                 </executions>
             </plugin>
@@ -71,25 +71,31 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClassPath>true</addClassPath>
-                            <mainClass>com.discord.dau.tree.TreeMain</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            -->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<addClassPath>true</addClassPath>-->
+                            <!--<mainClass>com.discord.dau.tree.TreeMain</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 
 
+
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.43</version>
+        </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -128,6 +134,14 @@
             <artifactId>apache-log4j-extras</artifactId>
             <version>1.2.17</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.10.3</version>
+        </dependency>
+
 
 
         <!--&lt;!&ndash; https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client-jetty &ndash;&gt;-->

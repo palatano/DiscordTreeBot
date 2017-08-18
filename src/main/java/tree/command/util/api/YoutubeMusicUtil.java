@@ -7,8 +7,12 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
+import com.sun.org.apache.regexp.internal.RE;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
+import net.dv8tion.jda.core.managers.AudioManager;
+import tree.command.music.AddCommand;
+import tree.command.music.RequestCommand;
 import tree.command.util.AuthUtil;
 import tree.command.util.MenuUtil;
 import tree.command.util.MessageUtil;
@@ -24,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import tree.Config;
 import tree.commandutil.CommandManager;
+import tree.commandutil.type.Command;
+import tree.commandutil.util.CommandRegistry;
 
 /**
  * Created by Valued Customer on 8/15/2017.
@@ -44,6 +50,24 @@ public class YoutubeMusicUtil {
         youtubeAPIKey = Config.getYoutubeAPIKey();
         audioPlayer = AudioPlayerAdapter.audioPlayer;
         menuUtil = MenuUtil.getInstance();
+    }
+
+//    public boolean inSameVoiceChannel(Guild guild, Member member) {
+//        AudioManager audioManager = guild.getAudioManager();
+//        return audioManager.isConnected() &&
+//                member.getVoiceState().getChannel().equals(audioManager.getConnectedChannel());
+//    }
+
+    public boolean menuIsOpen(Command currCommand, MessageChannel msgChan) {
+        if (currCommand instanceof AddCommand) {
+            AddCommand addCommand = (AddCommand) currCommand;
+            return addCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, addCommand.getCommandName());
+        } else if (currCommand instanceof RequestCommand) {
+            RequestCommand reqCommand = (RequestCommand) currCommand;
+            return reqCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, reqCommand.getCommandName());
+        }
+        System.out.println("SHOULD NOT BE REACHED.");
+        return false;
     }
 
     public static YoutubeMusicUtil getInstance() {
@@ -96,9 +120,9 @@ public class YoutubeMusicUtil {
             }
             Message songListMessage = new MessageBuilder().append(messageString).build();
 //            menuUtil.setMenuId(msgChan.getIdLong(), message.getIdLong());
-            msgChan.sendMessage(songListMessage).queue(m -> menuUtil.setMenuId(msgChan.getIdLong(), m.getIdLong()));
+            msgChan.sendMessage(songListMessage).queue(m -> menuUtil.setMenuId(commandName, msgChan, m));
             waitingForChoice.set(true);
-            menuUtil.setUserId(msgChan.getIdLong(), member.getUser().getIdLong());
+            menuUtil.setUserId(commandName, msgChan, member);
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
                     + e.getDetails().getMessage());
@@ -138,7 +162,6 @@ public class YoutubeMusicUtil {
             return null;
         }
         String url = songsToChoose.get(i - 1);
-        songsToChoose = new ArrayList<>();
         return url;
     }
 
@@ -158,16 +181,12 @@ public class YoutubeMusicUtil {
     }
 
     public void addSong(Guild guild, MessageChannel msgChan,
-                         Message message, Member member, String song) {
+                         String commandName, Member member, String song) {
+        guild.getAudioManager().openAudioConnection(member.getVoiceState().getChannel());
         GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
         musicManager.player.setPaused(false);
         audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member);
 
-        // Delete the menu.
-        long messageId = menuUtil.removeMenuId(msgChan.getIdLong());//menuMessageGuildMap.get(guild.getIdLong());
-        if (messageId != -1) {
-            msgChan.deleteMessageById(messageId).queue();
-        }
     }
 
     private boolean isDirectYoutubeURL(String query, MessageChannel msgChan) {
@@ -191,7 +210,7 @@ public class YoutubeMusicUtil {
         String videoTitle = singleVideo.getSnippet().getTitle();
         String desc = singleVideo.getSnippet().getDescription();
 
-        String beginning = atomInt.getAndIncrement() + ") " + "``" + videoTitle + "`` ";
+        String beginning = atomInt.addAndGet(1) + ") " + "``" + videoTitle + "`` ";
         String channel = "from channel ``" + author + "``";
         result += beginning + channel ;
         String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();

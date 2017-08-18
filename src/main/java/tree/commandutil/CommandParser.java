@@ -6,7 +6,7 @@ package tree.commandutil;
 public class CommandParser {
 
     private static boolean checkValidToken(String msgContent) {
-        return msgContent.startsWith(";") && msgContent.length() != 1;
+        return msgContent.startsWith(";") && msgContent.length() != 1 && msgContent.charAt(1) != ';';
     }
 
     private static String[] getArguments(String msgContent) {

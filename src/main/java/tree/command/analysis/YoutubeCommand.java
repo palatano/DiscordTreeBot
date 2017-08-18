@@ -18,6 +18,7 @@ import tree.Config;
 import tree.command.data.GoogleResults;
 import tree.command.util.AuthUtil;
 import tree.command.util.MessageUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
 import java.io.IOException;
@@ -94,7 +95,7 @@ public class YoutubeCommand implements AnalysisCommand {
     }
 
     @Deprecated
-    private static EmbedBuilder getMessageEmbed(SearchResult singleVideo, ResourceId rId, EmbedBuilder embed) {
+    private EmbedBuilder getMessageEmbed(SearchResult singleVideo, ResourceId rId, EmbedBuilder embed) {
         String result = "";
         String author = singleVideo.getSnippet().getChannelTitle();
         String videoTitle = singleVideo.getSnippet().getTitle();
@@ -110,13 +111,16 @@ public class YoutubeCommand implements AnalysisCommand {
         Thumbnail thumbnail = singleVideo.getSnippet().getThumbnails().getDefault();
         embed.setThumbnail(thumbnail.getUrl());
         if (counter == 1) {
-            embed.addField("Not the video you wanted?", "Type \"&youtube next\" for more"  +
+            embed.addField("Not the video you wanted?", "Type \"" +
+                    CommandManager.botToken +
+                    getCommandName() +
+                    " next\" for more"  +
                     " (Up to two more).", true);
         }
         return embed;
     }
 
-    private static String getMessageString(SearchResult singleVideo, ResourceId rId) {
+    private String getMessageString(SearchResult singleVideo, ResourceId rId) {
         String result = "";
         String author = singleVideo.getSnippet().getChannelTitle();
         String videoTitle = singleVideo.getSnippet().getTitle();
@@ -127,12 +131,16 @@ public class YoutubeCommand implements AnalysisCommand {
         String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();
         switch (counter) {
             case 1:
-                result += "Video result: (" + url + ")\nNot this one? Type \"&youtube next\" for more"  +
-                        " (Up to two more).";
+                result += "Video result: (" + url + ")\nNot this one? Type \"" +
+                        CommandManager.botToken +
+                        getCommandName() +
+                        " next\" for more (Up to two more).";
                 break;
             case 2:
-                result += "Video result: (" + url + ")\nNot this one? Type \"&youtube next\" for more"  +
-                        " (Up to one more).";
+                result += "Video result: (" + url + ")\nNot this one? Type \"" +
+                        CommandManager.botToken +
+                        getCommandName() +
+                        " next\" for more (Up to one more).";
                 break;
             case 3:
                 result += "Video result: (" + url + ")";
@@ -153,13 +161,14 @@ public class YoutubeCommand implements AnalysisCommand {
  *
  * @param query Search query (String)
  */
-    private static void getNextResult(Iterator<SearchResult> iteratorSearchResults,
+    private void getNextResult(Iterator<SearchResult> iteratorSearchResults,
                                     String query, MessageChannel msgChan) {
         EmbedBuilder embed = new EmbedBuilder();
         String messageString = "";
         if (!iteratorSearchResults.hasNext()) {
             System.out.println("No more results found.");
             MessageUtil.sendError("No more results found.", msgChan);
+            return;
         }
 
         while (iteratorSearchResults.hasNext()) {

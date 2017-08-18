@@ -26,44 +26,34 @@ public class RequestCommand implements MusicCommand {
     private static AtomicInteger counter;
     private AtomicBoolean waitingForChoice;
     private static List<String> songsToChoose;
-    private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> menuSelectionTask;
 
-    private void createScheduler(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                ytUtil.getMenuUtil().removeUserId(msgChan.getIdLong());
-                waitingForChoice.set(false);
-                songsToChoose = new ArrayList<>();
-                // Delete the menu.
-                long menuId = ytUtil.getMenuUtil().removeMenuId(msgChan.getIdLong());
-                if (menuId != -1) {
-                    msgChan.deleteMessageById(menuId).queue();
-                }
-            }
+    private Runnable createRunnable(Guild guild, MessageChannel msgChan, Member member) {
+        return () -> {
+            reset(msgChan);
+            ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
         };
-
-        menuSelectionTask = scheduler.schedule(
-                runnable, 25, TimeUnit.SECONDS);
     }
 
-
-    public void resetSongsToChoose() {
+    public void reset(MessageChannel msgChan) {
         songsToChoose = new ArrayList<>();
+        waitingForChoice.set(false);
+        if (menuSelectionTask.isCancelled() || menuSelectionTask.isDone()) {
+            menuSelectionTask.cancel(true);
+        }
     }
 
     public boolean hasMenu() {
         return waitingForChoice.get();
     }
 
-    public ScheduledFuture<?> getMenuSelectionTask() {
-        return menuSelectionTask;
-    }
-
-    public AtomicBoolean isWaitingForChoice() {
-        return waitingForChoice;
-    }
+//    public ScheduledFuture<?> getMenuSelectionTask() {
+//        return menuSelectionTask;
+//    }
+//
+//    public AtomicBoolean isWaitingForChoice() {
+//        return waitingForChoice;
+//    }
 
     // Race condition. Save the userID who entered the search query first. Let them choose it for 7 seconds
     // If not, reset the search.
@@ -71,8 +61,7 @@ public class RequestCommand implements MusicCommand {
     public RequestCommand(String commandName) {
         this.commandName = commandName;
         songsToChoose = new ArrayList<>();
-        scheduler = Executors
-                .newScheduledThreadPool(1);
+
         ytUtil = YoutubeMusicUtil.getInstance();
         counter = new AtomicInteger(0);
         waitingForChoice = new AtomicBoolean(false);
@@ -88,28 +77,38 @@ public class RequestCommand implements MusicCommand {
             return;
         }
 
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
+        }
+
+//        if (ytUtil.menuIsOpen(this, msgChan)) {
+//            message.addReaction("\u274E").queue();
+//            return;
+//        }
+
+
         String search = ytUtil.getQuery(args);
         // Path 1: No query have been entered yet. ALLOW a non-authorized
         // user to request and bring up the selection menu. Do not allow them to
         // add though.
         if (!waitingForChoice.get()) {
             if (MessageUtil.checkIfInt(search)) {
+                message.addReaction("\u274E").queue();
                 return;
             }
-            if (menuSelectionTask != null && scheduler != null) {
-                menuSelectionTask.cancel(true);
-            }
+
             if (ytUtil.youtubeSearch(search, guild, msgChan, message,
                     member, getCommandName(), counter, songsToChoose, waitingForChoice) == -1) {
                 return;
             }
-            if (menuSelectionTask == null || menuSelectionTask.isCancelled() || menuSelectionTask.isDone()) {
-                createScheduler(guild, msgChan, message, member);
-                message.addReaction("\u2705").queue();
-            }
+
+            menuSelectionTask = ytUtil.getMenuUtil().createMenuTask(createRunnable(guild, msgChan, member),
+                    menuSelectionTask, 15);
         } else {
             // Path 2: Not user, ignore command and return.
-            if (!ytUtil.authorizedUser(guild, member)) {
+            long lastUserId = ytUtil.getMenuUtil().getUserId(commandName, msgChan);
+            if (!ytUtil.authorizedUser(guild, member) || lastUserId == -1) {
                 message.addReaction("\u274E").queue();
                 return;
             }
@@ -117,19 +116,19 @@ public class RequestCommand implements MusicCommand {
             if (!MessageUtil.checkIfInt(search)) {
                 MessageUtil.sendError("Not a numerical response." +
                         " Please search for the video again.", msgChan);
-                waitingForChoice.set(false);
-                songsToChoose = new ArrayList<>();
-                menuSelectionTask.cancel(true);
+                reset(msgChan);
+                ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
                 return;
             }
             // Path 4: Correct user and valid int. Add song.
-            // Path 4: Correct user and valid int. Add song.
             int index = Integer.parseInt(search);
             String url = ytUtil.getSongURL(index, msgChan, songsToChoose);
-            ytUtil.addSong(guild, msgChan, message, member, url);
-            menuSelectionTask.cancel(true);
-            waitingForChoice.set(false);
-            message.addReaction("\u2705").queue();
+            if (url == null) {
+                return;
+            }
+            ytUtil.addSong(guild, msgChan, commandName, member, url);
+            reset(msgChan);
+            ytUtil.getMenuUtil().deleteMenu(msgChan, commandName);
         }
     }
 

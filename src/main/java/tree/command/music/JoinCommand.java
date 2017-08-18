@@ -26,12 +26,10 @@ public class JoinCommand implements MusicCommand {
     }
 
     private void join(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        AudioManager audioManager = guild.getAudioManager();
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
         if (guild.getAudioManager().isConnected() || guild.getAudioManager().isAttemptingToConnect()) {
             return;
         }
-        audioPlayer.connectToMusicChannel(guild.getAudioManager());
+        audioPlayer.connectToMusicChannel(guild.getAudioManager(), member);
     }
 
     @Override

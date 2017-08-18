@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import tree.command.util.MessageUtil;
 
@@ -26,16 +27,21 @@ public class TrackScheduler extends AudioEventAdapter {
     private Map<Guild, AudioTrack> lastSongAddedMap;
     private static final int MAX_SONGS_LISTED = 7;
 
-    public void removeLastTrack(Guild guild, MessageChannel msgChan) {
+    public void removeLastTrack(Guild guild, MessageChannel msgChan, Message message) {
         AudioTrack track = lastSongAddedMap.get(guild);
-        if (track.equals(player.getPlayingTrack())) {
-            player.stopTrack();
+        if (track == null) {
+            message.addReaction("\u274E").queue();
             return;
         }
-        if (track == null) {
-            MessageUtil.sendError("There is no song to undo. Playlist is empty.", msgChan);
+        if (track.equals(player.getPlayingTrack())) {
+            player.stopTrack();
+            lastSongAddedMap.remove(guild);
+            message.addReaction("\u2705").queue();
+            return;
         }
+        lastSongAddedMap.remove(guild);
         queue.remove(track);
+        message.addReaction("\u2705").queue();
     }
 
     public boolean isEmpty() {

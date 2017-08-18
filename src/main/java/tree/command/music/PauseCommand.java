@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -26,7 +27,10 @@ public class PauseCommand implements MusicCommand {
 
     private void stop(Guild guild, MessageChannel msgChan, Message message, Member member) {
         GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
-        msgChan.sendMessage("Song has now been paused. Type ``&resume`` to continue.").queue();
+        msgChan.sendMessage("Song has now been paused. Type ``" +
+                CommandManager.botToken +
+                getCommandName() +
+                "`` to continue.").queue();
         musicManager.player.setPaused(true);
     }
 
