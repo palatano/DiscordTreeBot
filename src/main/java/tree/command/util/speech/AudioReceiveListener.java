@@ -6,56 +6,130 @@ import com.google.cloud.speech.v1.*;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
+import edu.cmu.sphinx.api.Configuration;
+import edu.cmu.sphinx.api.StreamSpeechRecognizer;
 import net.dv8tion.jda.core.audio.AudioReceiveHandler;
 import net.dv8tion.jda.core.audio.CombinedAudio;
 import net.dv8tion.jda.core.audio.UserAudio;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 //import com.google.protobuf.*;
 import com.google.api.*;
 import org.threeten.bp.Duration;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by Valued Customer on 8/4/2017.
  */
 public class AudioReceiveListener implements AudioReceiveHandler
 {
+//    public ConcurrentLinkedQueue<byte[]> bridgeQueue = new ConcurrentLinkedQueue<>();
+//    public ByteArrayOutputStream baos = new ByteArrayOutputStream();
     public static final double STARTING_MB = 0.5;
     public static final int CAP_MB = 16;
     public static final double PCM_MINS = 2;
     public double AFK_LIMIT = 2;
     public boolean canReceive = true;
     public double volume = 1.0;
-    private VoiceChannel voiceChannel;
+//    private VoiceChannel voiceChannel;
 
-    public byte[] uncompVoiceData = new byte[(int) (3840 * 50 * 60) ]; //3840bytes/array * 50arrays/sec * 60sec = 1 mins
+    public static final int MAX_RECORD_TIME = 3840 * 50 * 15;
+    public byte[] uncompVoiceData = new byte[MAX_RECORD_TIME]; //3840bytes/array * 50arrays/sec * 5sec = 5sec
     public int uncompIndex = 0;
 
-    public byte[] compVoiceData = new byte[(int) (1024 * 1024 * STARTING_MB)];    //start with 0.5 MB
-    public int compIndex = 0;
+    public byte[] uncompUserVoiceData = new byte[MAX_RECORD_TIME]; //3840bytes/array * 50arrays/sec * 5sec = 5sec
+    public int uncompUserIndex = 0;
 
-    public boolean overwriting = false;
-
-    private int afkTimer;
-
-    public AudioReceiveListener(double volume, VoiceChannel voiceChannel) {
+    public AudioReceiveListener(double volume) {
         this.volume = volume;
-        this.voiceChannel = voiceChannel;
+//        this.voiceChannel = voiceChannel;
+
+    }
+
+    public void reset() {
+        uncompVoiceData = new byte[MAX_RECORD_TIME];
+        uncompIndex = 0;
+        uncompUserVoiceData = new byte[MAX_RECORD_TIME];
+        uncompUserIndex = 0;
     }
 
     @Override
     public boolean canReceiveCombined()
     {
-        return canReceive;
+        return true;
     }
 
     @Override
     public boolean canReceiveUser()
     {
-        return false;
+        return true;
     }
-/*
+
+    public byte[] getVoiceData() {
+        return uncompVoiceData;
+    }
+
+
+    @Override
+    public void handleCombinedAudio(CombinedAudio combinedAudio) {
+        for (byte b : combinedAudio.getAudioData(1.0)) {
+            if (uncompIndex >= MAX_RECORD_TIME) {
+//            System.out.println("COMBINED AUDIO ARRAY FULL");
+                return;
+            }
+            uncompVoiceData[uncompIndex++] = b;
+        }
+
+    }
+
+
+    @Override
+    public void handleUserAudio(UserAudio userAudio) {
+        for (byte b : userAudio.getAudioData(1.0)) {
+            if (uncompUserIndex >= MAX_RECORD_TIME) {
+//            System.out.println("COMBINED AUDIO ARRAY FULL");
+                return;
+            }
+//            System.out.println("USER AUDIO ARRAY FULL");
+            uncompUserVoiceData[uncompUserIndex++] = b;
+        }
+    }
+
+    public static void streamRecognizeFile(byte[] data) throws Exception {
+        ByteString audioBytes = ByteString.copyFrom(data);
+        SpeechClient speech = SpeechClient.create();
+        //SpeechClient speech = SpeechClient.create();
+
+        // Builds the sync recognize request
+        RecognitionConfig config = RecognitionConfig.newBuilder()
+                .setEncoding(com.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.LINEAR16)
+                .setSampleRateHertz(16000)
+                //.setSampleRateHertz(16000)
+                .setLanguageCode("en-US")
+                .build();
+        RecognitionAudio audio = RecognitionAudio.newBuilder()
+                .setContent(audioBytes)
+                .build();
+
+        // Performs speech recognition on the audio file
+        //speech.recog
+        RecognizeResponse response = speech.recognize(config, audio);
+        List<SpeechRecognitionResult> results = response.getResultsList();
+
+        for (SpeechRecognitionResult result: results) {
+            List<SpeechRecognitionAlternative> alternatives = result.getAlternativesList();
+            for (SpeechRecognitionAlternative alternative: alternatives) {
+                System.out.printf("Transcription: %s%n", alternative.getTranscript());
+            }
+        }
+        speech.close();
+    }
+
+    /*
     //encode the passed array of PCM (uncompressed) audio to mp3 audio data
     public static byte[] encodePcmToMp3(byte[] pcm) {
         LameEncoder encoder =
@@ -81,41 +155,7 @@ public class AudioReceiveListener implements AudioReceiveHandler
         return mp3.toByteArray();
     }*/
 
-    public byte[] getVoiceData() {
-        return uncompVoiceData;
-    }
-
-    public static void streamRecognizeFile(byte[] data) throws Exception {
-        ByteString audioBytes = ByteString.copyFrom(data);
-        SpeechClient speech = SpeechClient.create();
-        //SpeechClient speech = SpeechClient.create();
-
-        // Builds the sync recognize request
-        RecognitionConfig config = RecognitionConfig.newBuilder()
-                .setEncoding(com.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.LINEAR16)
-                .setSampleRateHertz(16000)
-                //.setSampleRateHertz(16000)
-                .setLanguageCode("en-US")
-                .build();
-        RecognitionAudio audio = RecognitionAudio.newBuilder()
-                .setContent(audioBytes)
-                .build();
-
-        // Performs speech recognition on the audio file
-       //speech.recog
-        RecognizeResponse response = speech.recognize(config, audio);
-        List<SpeechRecognitionResult> results = response.getResultsList();
-
-        for (SpeechRecognitionResult result: results) {
-            List<SpeechRecognitionAlternative> alternatives = result.getAlternativesList();
-            for (SpeechRecognitionAlternative alternative: alternatives) {
-                System.out.printf("Transcription: %s%n", alternative.getTranscript());
-            }
-        }
-        speech.close();
-    }
-
-        // Instantiates a client with GOOGLE_APPLICATION_CREDENTIALS
+    // Instantiates a client with GOOGLE_APPLICATION_CREDENTIALS
         /*SpeechClient speech = SpeechClient.create();
 
         // Configure request with local raw PCM audio
@@ -186,22 +226,17 @@ public class AudioReceiveListener implements AudioReceiveHandler
         }
         speech.close();
     }*/
+//        bridgeQueue.add(combinedAudio.getAudioData(1.0));
+//        uncompIndex = 0;
+//        for (byte b : combinedAudio.getAudioData(volume)) {
+//            uncompVoiceData[uncompIndex++] = b;
+//        }
 
-
-    @Override
-    public void handleCombinedAudio(CombinedAudio combinedAudio)
-    {
-
-        uncompIndex = 0;
-        for (byte b : combinedAudio.getAudioData(volume)) {
-            uncompVoiceData[uncompIndex++] = b;
-        }
-
-        try {
-            streamRecognizeFile(uncompVoiceData);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            streamRecognizeFile(uncompVoiceData);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
 //        //String data = new String(uncompVoiceData);
 //        File out = new File("out");
@@ -297,7 +332,7 @@ public class AudioReceiveListener implements AudioReceiveHandler
         for (byte b : combinedAudio.getAudioData(volume)) {
             uncompVoiceData[uncompIndex++] = b;
         }*/
-    }
+
 /*
     public byte[] getVoiceData() {
         canReceive = false;
@@ -391,6 +426,4 @@ public class AudioReceiveListener implements AudioReceiveHandler
         return voiceData;
     }*/
 
-    @Override
-    public void handleUserAudio(UserAudio userAudio) {}
 }

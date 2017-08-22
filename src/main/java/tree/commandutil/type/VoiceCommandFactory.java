@@ -2,6 +2,7 @@ package tree.commandutil.type;
 
 import tree.command.text.CommandsCommand;
 import tree.command.text.TestCommand;
+import tree.command.voice.EchoCommand;
 import tree.command.voice.VoiceSearchCommand;
 
 /**
@@ -29,6 +30,8 @@ public class VoiceCommandFactory extends AbstractCommandFactory {
         switch (voiceType) {
             case "voicesearch":
                 return new VoiceSearchCommand("voicesearch");
+            case "echo":
+                return new EchoCommand("echo");
             default:
                 return null;
         }

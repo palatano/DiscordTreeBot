@@ -1,5 +1,6 @@
 package tree;
 
+import net.dv8tion.jda.core.utils.SimpleLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
@@ -22,13 +23,16 @@ public abstract class TreeMain extends ListenerAdapter {
     private static Logger log = LoggerFactory.getLogger(TreeMain.class);
 
     public static void main(String[] args) {
-
         log.info(">>>>>>>> TreeMain Start <<<<<<<<");
-        /* Get the credentials file. */
+        SimpleLog.LEVEL = SimpleLog.Level.TRACE;
+
+        // Get the credentials file.
 //      JDBCInit db = new JDBCInit();
 //      db.init();
         Config.setUpConfig(args);
         log.info("Configuration is complete.");
+
+        // Create the bot and add the listeners for the bot.
         listener = new TreeListener();
         try {
             TreeBot.setUp();
@@ -36,7 +40,6 @@ public abstract class TreeMain extends ListenerAdapter {
         } catch (LoginException | RateLimitedException | InterruptedException ex) {
             System.out.println(ex.getClass());
         }
-        /* Create the bot and add the listeners for the bot. */
     }
 
     private static void addListener(TreeListener listener) {

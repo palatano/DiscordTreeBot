@@ -21,6 +21,7 @@ public class Config {
     private static long adminID;
     private static String youtubeAPIKey;
     private static boolean isTesting = false;
+    private static Map<String, String> guildWithChannels;
 
     public Config(String credsFilePath) {
         try {
@@ -38,12 +39,16 @@ public class Config {
             } else {
                 isTesting = false;
             }
+            String guildsWithSettings = (String) creds.get("guildsWithSettings");
+            String[] guilds = guildsWithSettings.split(", ");
+
             osName = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
 
         } catch (IOException e) {
             System.out.println("File cannot be opened. Exception: " + e + ".");
             throw new NullPointerException();
         }
+        // For guilds with specific settings, have a field for selected guilds.
     }
 
     public boolean isTesting() {
@@ -78,6 +83,5 @@ public class Config {
     public static String getYoutubeAPIKey() {
         return youtubeAPIKey;
     }
-
 
 }

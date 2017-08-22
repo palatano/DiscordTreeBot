@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
+import tree.command.util.speech.AudioReceiveListener;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -29,6 +30,10 @@ public class JoinCommand implements MusicCommand {
         if (guild.getAudioManager().isConnected() || guild.getAudioManager().isAttemptingToConnect()) {
             return;
         }
+//        AudioReceiveListener ah = new AudioReceiveListener(1.0,
+//                member.getVoiceState().getChannel());
+        AudioManager audioManager = guild.getAudioManager();
+        audioManager.openAudioConnection(member.getVoiceState().getChannel());
         audioPlayer.connectToMusicChannel(guild.getAudioManager(), member);
     }
 

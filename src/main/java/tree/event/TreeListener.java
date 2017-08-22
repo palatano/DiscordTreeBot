@@ -16,10 +16,12 @@ public class TreeListener extends ListenerAdapter {
     private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L, 337641574249005065L};
     private static final long[] TREES_CHANNELS = {249791455592316930L, 269577202016845824L, 346493255896268802L};
 
+
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event == null || event.getChannel() == null) {
             return;
         }
+
         // If testing only, only allow commands in testing server.
         if (Config.CONFIG.isTesting()) {
             if (!testingOnly(event.getTextChannel())) {
@@ -30,10 +32,12 @@ public class TreeListener extends ListenerAdapter {
                 return;
             }
         }
+
         Message msg = event.getMessage();
         if (!msg.getContent().startsWith(";")) {
             return;
         }
+
         CommandManager.messageCommand(msg);
     }
 
@@ -54,33 +58,6 @@ public class TreeListener extends ListenerAdapter {
                 }
             }
             return false;
-        }
-        return true;
-    }
-
-    private boolean inBotChannel(MessageReceivedEvent event) {
-        if (event.getGuild().getName().equals("/r/trees")) {
-            return event.getTextChannel()
-                    .getId()
-                    .equals("249791455592316930");
-        }
-        return true;
-    }
-
-    private boolean inMusicChannel(MessageReceivedEvent event) {
-        if (event.getGuild().getName().equals("/r/trees")) {
-            return event.getTextChannel()
-                    .getId()
-                    .equals("269577202016845824");
-        }
-        return true;
-    }
-
-    private boolean inMusicBetaChannel(MessageReceivedEvent event) {
-        if (event.getGuild().getName().equals("/r/trees")) {
-            return event.getTextChannel()
-                    .getId()
-                    .equals("346493255896268802");
         }
         return true;
     }

@@ -19,7 +19,7 @@ public class CommandInit {
     private static final String[] textCommands = {"test", "commands"};
     private static final String[] pictureCommands = {"nugget"};
     private static final String[] analysisCommands = {"info", "uniqueusers", "search", "ping", "youtube"};
-    private static final String[] voiceCommands = {"voicesearch"};
+    private static final String[] voiceCommands = {"voicesearch", "echo"};
     private static final String[] musicCommands = {"add", "skip", "pause", "list", "unpause",
             "leave", "join", "musicCommands", "cnl", "req", "undo"};
 
