@@ -27,6 +27,16 @@ public class MessageUtil {
         return true;
     }
 
+    public static boolean checkIfLong(String s) {
+        try {
+            Long.parseLong(s);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
+    }
+
+
     public static boolean isInvalidFutureDate(Calendar cal, OffsetDateTime msgDate) {
         int commandYear = cal.get(Calendar.YEAR);
         int msgYear = msgDate.getYear();

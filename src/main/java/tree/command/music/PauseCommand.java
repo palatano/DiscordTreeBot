@@ -22,11 +22,12 @@ public class PauseCommand implements MusicCommand {
 
     public PauseCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void stop(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
+                .getGuildAudioPlayer(guild);
         msgChan.sendMessage("Song has now been paused. Type ``" +
                 CommandManager.botToken +
                 getCommandName() +

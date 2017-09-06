@@ -5,6 +5,7 @@ import net.dv8tion.jda.core.managers.AudioManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
+import tree.command.util.music.GuildMusicManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -15,27 +16,16 @@ import java.util.List;
  */
 public class SkipCommand implements MusicCommand {
     private String commandName;
-    private AudioPlayerAdapter audioPlayer;
+    private AudioPlayerAdapter audioPlayerAdapter;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
 
     public SkipCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
-    }
-
-    private boolean connect(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        List<VoiceChannel> voiceChannelList = guild.getVoiceChannelsByName("music", true);
-        AudioManager audioManager = guild.getAudioManager();
-        if (voiceChannelList.isEmpty()) {
-            LoggerUtil.logMessage(logger, message, "No #music channel found.");
-            return false;
-        }
-        audioManager.openAudioConnection(voiceChannelList.get(0));
-        return true;
+        audioPlayerAdapter = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void skipSong(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        audioPlayer.skipTrack(message.getTextChannel());
+        audioPlayerAdapter.skipTrack(message.getTextChannel());
     }
 
     @Override

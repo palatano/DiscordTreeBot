@@ -25,6 +25,12 @@ public class AnalysisCommandFactory extends AbstractCommandFactory {
                 return new PingCommand("ping");
             case "youtube":
                 return new YoutubeCommand("youtube");
+            case "set":
+                return new SetCommand("set");
+            case "unset":
+                return new UnsetCommand("unset");
+            case "guildpermissions":
+                return new GuildPermissionsCommand("guildpermissions");
             default:
                 return null;
         }

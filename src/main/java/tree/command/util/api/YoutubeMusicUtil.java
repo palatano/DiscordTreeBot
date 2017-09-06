@@ -23,8 +23,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import tree.Config;
 import tree.commandutil.CommandManager;
@@ -39,8 +42,9 @@ public class YoutubeMusicUtil {
     private AudioPlayerAdapter audioPlayer;
     private YouTube youtube;
     private String youtubeAPIKey;
-    private static final String[] AUTHORIZED_ROLES = {"Discord DJ", "Tester", "Moderator"}; //TODO - Read this from file.
+    private static final String[] AUTHORIZED_ROLES = {"Discord DJ", "Moderator"}; //TODO - Read this from file.
     private static MenuUtil menuUtil;
+    public static final int MAX_RESULTS = 4;
 
     private YoutubeMusicUtil() {
         youtube = new YouTube.Builder(AuthUtil.HTTP_TRANSPORT, AuthUtil.JSON_FACTORY, new HttpRequestInitializer() {
@@ -48,26 +52,8 @@ public class YoutubeMusicUtil {
             }
         }).setApplicationName("TreeBot").build();
         youtubeAPIKey = Config.getYoutubeAPIKey();
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
         menuUtil = MenuUtil.getInstance();
-    }
-
-//    public boolean inSameVoiceChannel(Guild guild, Member member) {
-//        AudioManager audioManager = guild.getAudioManager();
-//        return audioManager.isConnected() &&
-//                member.getVoiceState().getChannel().equals(audioManager.getConnectedChannel());
-//    }
-
-    public boolean menuIsOpen(Command currCommand, MessageChannel msgChan) {
-        if (currCommand instanceof AddCommand) {
-            AddCommand addCommand = (AddCommand) currCommand;
-            return addCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, addCommand.getCommandName());
-        } else if (currCommand instanceof RequestCommand) {
-            RequestCommand reqCommand = (RequestCommand) currCommand;
-            return reqCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, reqCommand.getCommandName());
-        }
-        System.out.println("SHOULD NOT BE REACHED.");
-        return false;
     }
 
     public static YoutubeMusicUtil getInstance() {
@@ -77,9 +63,9 @@ public class YoutubeMusicUtil {
     public int youtubeSearch(String query, Guild guild,
                              MessageChannel msgChan, Message message, Member member,
                              String commandName, AtomicInteger atomInt, List<String> songsToChoose,
-                             AtomicBoolean waitingForChoice) {
+                             AtomicLong menuId) {
         try {
-            atomInt.set(0);
+//            atomInt.set(0);
             // This object is used to make YouTube Data API requests. The last
             // argument is required, but since we don't need anything
             // initialized when the HttpRequest is initialized, we override
@@ -88,7 +74,21 @@ public class YoutubeMusicUtil {
             initializeSearchFields(search, query);
 
             // If given a direct URL, get the result and complete the search.
-            if (isDirectYoutubeURL(query, msgChan)) {
+            if (isDirectYoutubeURL(query, msgChan) == 1) {
+                // Add the song.
+                if (commandName.equals("add")) {
+                    addSong(guild, msgChan, commandName, member, query);
+                    return -1;
+                } else {
+                    String directString = "**Authorized Users**: Confirm the direct URL link by typing ``" +
+                            CommandManager.botToken +
+                            commandName +
+                            " 1``.";
+                    songsToChoose.add(query);
+                    menuId.set(msgChan.sendMessage(directString).complete().getIdLong());
+                    return 0;
+                }
+            } else if (isDirectYoutubeURL(query, msgChan) == 2) {
                 return -1;
             }
 
@@ -103,10 +103,16 @@ public class YoutubeMusicUtil {
 
             // Create an iterator for the results, and then merge into a list.
             Iterator<SearchResult> iteratorSearchResults = resultList.iterator();
-            String messageString = "Type ``" +
+            String messageString = "";
+            if (commandName.equals("add")) {
+                messageString += "**" + member.getEffectiveName();
+            } else if (commandName.equals("req")) {
+                messageString += "**Authorized Users";
+            }
+            messageString += "**: Choose your song with ``" +
                     CommandManager.botToken +
                     commandName +
-                    " n`` to select the song, where ``n`` is your choice. \n\n";
+                    " #``.\n\n";
 
             while (iteratorSearchResults.hasNext()) {
                 SearchResult singleVideo = iteratorSearchResults.next();
@@ -118,11 +124,7 @@ public class YoutubeMusicUtil {
                     messageString += getMessageString(singleVideo, rId, atomInt, songsToChoose) + "\n";
                 }
             }
-            Message songListMessage = new MessageBuilder().append(messageString).build();
-//            menuUtil.setMenuId(msgChan.getIdLong(), message.getIdLong());
-            msgChan.sendMessage(songListMessage).queue(m -> menuUtil.setMenuId(commandName, msgChan, m));
-            waitingForChoice.set(true);
-            menuUtil.setUserId(commandName, msgChan, member);
+            menuId.set(msgChan.sendMessage(messageString).complete().getIdLong());
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
                     + e.getDetails().getMessage());
@@ -143,17 +145,7 @@ public class YoutubeMusicUtil {
     }
 
     public boolean authorizedUser(Guild guild, Member member) {
-        for (String roleName : AUTHORIZED_ROLES) {
-            List<Role> roles = guild.getRolesByName(roleName, true);
-            if (roles.isEmpty()) {
-                continue;
-            }
-            Role authRole = roles.get(0);
-            if (member.getRoles().contains(authRole)) {
-                return true;
-            }
-        }
-        return false;
+        return Config.hasMusicRole(guild, member);
     }
 
     public String getSongURL(int i, MessageChannel msgChan, List<String> songsToChoose) {
@@ -177,30 +169,42 @@ public class YoutubeMusicUtil {
         // application uses.
         search.setFields("items(snippet/channelTitle,id/kind,id/videoId,snippet/title," +
                 "snippet/thumbnails/default/url,snippet/description)");
-        search.setMaxResults(4L);
+        search.setMaxResults((long) MAX_RESULTS);
     }
 
     public void addSong(Guild guild, MessageChannel msgChan,
                          String commandName, Member member, String song) {
-        guild.getAudioManager().openAudioConnection(member.getVoiceState().getChannel());
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+        AudioManager audioManager = guild.getAudioManager();
+        if (!audioManager.isConnected() || !audioManager.isAttemptingToConnect()) {
+            guild.getAudioManager().openAudioConnection(member.getVoiceState().getChannel());
+        }
+        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
+                .getGuildAudioPlayer(guild);
         musicManager.player.setPaused(false);
         audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member);
 
     }
 
-    private boolean isDirectYoutubeURL(String query, MessageChannel msgChan) {
+    /**
+     *
+     * @param query
+     * @param msgChan
+     * @return 0 - Not a URL.
+     *         1 - Is a youtube URL
+     *         2 - Not a youtube URL.
+     */
+    private int isDirectYoutubeURL(String query, MessageChannel msgChan) {
         // If the user entered a URL, there should be only one selection AND it should only be youtube.
         if (query.contains(".com")) {
             if (query.contains("youtu")) {
-                // Just add the first (and only) song given with the URL.
+                return 1;
             } else {
-                System.out.println(" There aren't any results for your query.");
-                MessageUtil.sendError("No results are found", msgChan);
+                System.out.println("Youtube links are only supported.");
+                MessageUtil.sendError("Youtube links are only supported.", msgChan);
+                return 2;
             }
-            return true;
         }
-        return false;
+        return 0;
     }
 
     private static String getMessageString(SearchResult singleVideo, ResourceId rId, AtomicInteger atomInt,
@@ -222,4 +226,17 @@ public class YoutubeMusicUtil {
     public MenuUtil getMenuUtil() {
         return menuUtil;
     }
+
+    //    public boolean menuIsOpen(Command currCommand, MessageChannel msgChan) {
+//        if (currCommand instanceof AddCommand) {
+//            AddCommand addCommand = (AddCommand) currCommand;
+//            return addCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, addCommand.getCommandName());
+//        } else if (currCommand instanceof RequestCommand) {
+//            RequestCommand reqCommand = (RequestCommand) currCommand;
+//            return reqCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, reqCommand.getCommandName());
+//        }
+//        System.out.println("SHOULD NOT BE REACHED.");
+//        return false;
+//    }
+
 }

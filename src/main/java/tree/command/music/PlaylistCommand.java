@@ -38,7 +38,7 @@ public class PlaylistCommand implements MusicCommand {
 
     public PlaylistCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
         scheduler = Executors.newScheduledThreadPool(1);
         guildChannelMap = new HashMap<>();
     }
@@ -59,7 +59,8 @@ public class PlaylistCommand implements MusicCommand {
         @Override
         public void run() {
             // If the queue is empty, don't post the songlist.
-            GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+            GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
+                    .getGuildAudioPlayer(guild);
             // If queue is empty OR someone wanted to disable the automatic playlist,
             // have a boolean preventing it from posting.
             if (musicManager.scheduler.isEmpty() || !automaticPosting) {
@@ -77,11 +78,12 @@ public class PlaylistCommand implements MusicCommand {
     private void schedulePlaylist(Guild guild, MessageChannel msgChan, Message message, Member member) {
         // Create a new task, but make sure the guild is updated.
         task = scheduler.scheduleWithFixedDelay(new PlaylistRunnable(guild, msgChan, message, member),
-                0, 15, TimeUnit.MINUTES);
+                0, 20, TimeUnit.MINUTES);
     }
 
     private void listSongs(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
+                .getGuildAudioPlayer(guild);
         String songList = musicManager.scheduler.printSongList();
         msgChan.sendMessage(songList).queue();
     }
@@ -120,7 +122,9 @@ public class PlaylistCommand implements MusicCommand {
                 schedulePlaylist(guild, msgChan, message, member);
                 playlistTaskStarted = true;
                 // If the playlist is empty, make sure its stated once.
-                GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+                GuildMusicManager musicManager =
+                        AudioPlayerAdapter.audioPlayerAdapter
+                                .getGuildAudioPlayer(guild);
                 if (musicManager.scheduler.isEmpty()) {
                     listSongs(guild, msgChan, message, member);
                 }

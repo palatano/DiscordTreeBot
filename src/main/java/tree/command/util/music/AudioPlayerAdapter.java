@@ -29,7 +29,7 @@ import java.util.Map;
 public class AudioPlayerAdapter extends ListenerAdapter {
     private final AudioPlayerManager playerManager;
     private final Map<Long, GuildMusicManager> musicManagers;
-    public static final AudioPlayerAdapter audioPlayer = new AudioPlayerAdapter();
+    public static final AudioPlayerAdapter audioPlayerAdapter = new AudioPlayerAdapter();
 
     private AudioPlayerAdapter() {
         this.musicManagers = new HashMap<>();
@@ -51,7 +51,6 @@ public class AudioPlayerAdapter extends ListenerAdapter {
         guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
 
         return musicManager;
-//        guild.getOwner().getI
     }
 
 

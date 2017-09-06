@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class NuggetCommand implements PictureCommand {
     private String commandName;
-    private static final int NUMBER_NUG_PHOTOS = 6;
+    private static final int NUMBER_NUG_PHOTOS = 61;
     private static final String[] fileExtensions = {".jpg", ".gif", ".png"};
-    private static final int SPAM_NUG_COUNT = 5;
+    private static final int SPAM_NUG_COUNT = 4;
     private PriorityQueue<Pair<Integer, Long>> photoIDsPosted;
     private int numNugCount = 0;
     private boolean nugPicAllowed = true;
@@ -137,6 +137,10 @@ public class NuggetCommand implements PictureCommand {
         }
         System.out.println("No files found with the given extension.");
         numNugCount--;
+        nugPicAllowed = true;
+        if (rand == 4) {
+            System.out.println("Yes, this was the PNG file");
+        }
         writeRandomNugPhoto(msgChan);
     }
 

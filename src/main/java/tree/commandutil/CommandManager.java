@@ -22,6 +22,7 @@ public class CommandManager {
     private static Logger log = LoggerFactory.getLogger(CommandManager.class);
     public static final String botToken = ";";
     public static final String bulletToken = "\u25C9";
+    public static final long ownerId = 192372494202568706L;
 
     public static void init() {
         CommandRegistry.setCommandRegistry();

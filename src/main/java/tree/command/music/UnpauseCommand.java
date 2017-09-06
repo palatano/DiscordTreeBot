@@ -14,18 +14,18 @@ import tree.util.LoggerUtil;
 /**
  * Created by Valued Customer on 8/12/2017.
  */
-public class UnpauseCommand implements MusicCommand{
+public class UnpauseCommand implements MusicCommand {
     private String commandName;
     private AudioPlayerAdapter audioPlayer;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
 
     public UnpauseCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void resume(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter.getGuildAudioPlayer(guild);
         msgChan.sendMessage("Song will now continue.").queue();
         musicManager.player.setPaused(false);
     }

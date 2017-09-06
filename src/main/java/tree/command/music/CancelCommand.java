@@ -33,14 +33,17 @@ public class CancelCommand implements MusicCommand {
         RequestCommand reqCommand = (RequestCommand) CommandRegistry.getCommand("req");
         InfoCommand infoCommand = (InfoCommand) CommandRegistry.getCommand("info");
         MenuUtil menuUtil = ytUtil.getMenuUtil();
+        long userId = member.getUser().getIdLong();
         // See if a menu exists. If not return.
-        if (addCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, "add")) {
-            addCommand.reset(msgChan);
-            menuUtil.deleteMenu(msgChan, addCommand.getCommandName());
-        } else if (reqCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, "req")) {
-            reqCommand.reset(msgChan);
-            menuUtil.deleteMenu(msgChan, reqCommand.getCommandName());
-        } else if (infoCommand.waitingForChoice() && menuUtil.inSameMessageChannel(msgChan, "info")) {
+        if (addCommand.hasMenu(guild, userId) &&
+                addCommand.inSameChannel(guild, userId, msgChan)) {
+            addCommand.reset(guild, userId);
+//            menuUtil.deleteMenu(msgChan, addCommand.getCommandName());
+        } else if (reqCommand.hasMenu(guild, userId) &&
+                reqCommand.inSameChannel(guild, userId, msgChan)) {
+            reqCommand.reset(guild, userId);
+//            menuUtil.deleteMenu(msgChan, reqCommand.getCommandName());
+        } else if (infoCommand.waitingForChoice()) {
             infoCommand.reset(msgChan);
             menuUtil.deleteMenu(msgChan, infoCommand.getCommandName());
         } else {

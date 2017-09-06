@@ -1,12 +1,11 @@
 package tree.command.music;
 
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.AudioManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tree.Config;
+import tree.command.util.MessageUtil;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 import tree.command.util.speech.AudioReceiveListener;
@@ -23,15 +22,15 @@ public class JoinCommand implements MusicCommand {
 
     public JoinCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void join(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        if (guild.getAudioManager().isConnected() || guild.getAudioManager().isAttemptingToConnect()) {
+        VoiceChannel voiceChan = member.getVoiceState().getChannel();
+        if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
+            MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
             return;
         }
-//        AudioReceiveListener ah = new AudioReceiveListener(1.0,
-//                member.getVoiceState().getChannel());
         AudioManager audioManager = guild.getAudioManager();
         audioManager.openAudioConnection(member.getVoiceState().getChannel());
         audioPlayer.connectToMusicChannel(guild.getAudioManager(), member);

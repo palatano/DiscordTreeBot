@@ -24,7 +24,7 @@ public abstract class TreeMain extends ListenerAdapter {
 
     public static void main(String[] args) {
         log.info(">>>>>>>> TreeMain Start <<<<<<<<");
-        SimpleLog.LEVEL = SimpleLog.Level.TRACE;
+//        SimpleLog.LEVEL = SimpleLog.Level.TRACE;
 
         // Get the credentials file.
 //      JDBCInit db = new JDBCInit();

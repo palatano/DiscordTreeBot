@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import javafx.util.Pair;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
@@ -126,6 +127,27 @@ public class TrackScheduler extends AudioEventAdapter {
                 break;
             }
         }
+        list += "\n**Total number of songs: " + (queue.size() + 1) +
+                "**. Set the automatic playlist feature with" +
+                " ``;list on`` or ``list off``.";
         return list;
     }
+
+    public String showCurrentSong() {
+        String list = "";
+        if (player.getPlayingTrack() == null) {
+            return "No songs are currently playing.";
+        }
+        Member currMember = personAddedMap.get(player.getPlayingTrack());
+        AudioTrackInfo currentSongInfo = player.getPlayingTrack().getInfo();
+        list += "``Now Playing:`` " + currentSongInfo.title + " " + getSongDuration(currentSongInfo.length) +
+                ", added by ``" + currMember.getEffectiveName() + "``\n\n";
+        if (!queue.isEmpty()) {
+            AudioTrackInfo nextSong = queue.peek().getInfo();
+            list += "``Next Song``: " + nextSong.title + " " + getSongDuration(currentSongInfo.length) +
+                    ", added by ``" + currMember.getEffectiveName() + "``\n";
+        }
+        return list;
+    }
+
 }

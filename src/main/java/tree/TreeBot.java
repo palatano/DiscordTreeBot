@@ -4,6 +4,7 @@ import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
+import tree.event.AsynchEventManager;
 import tree.event.TreeListener;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -39,9 +40,10 @@ public class TreeBot extends TreeMain {
         try {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             jda = new JDABuilder(AccountType.BOT)
-                .setHttpClientBuilder(setupBuilder(builder))
-                .setToken(Config.CONFIG.getBotToken())
-                .buildBlocking();
+                    .setHttpClientBuilder(setupBuilder(builder))
+                    .setToken(Config.CONFIG.getBotToken())
+                    .setEventManager(new AsynchEventManager())
+                    .buildAsync();
             return jda;
         } catch (Exception e) {
             System.out.println("Failed to setup the bot with exception " + e + ". Try again later.");

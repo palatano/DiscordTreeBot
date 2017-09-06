@@ -1,5 +1,6 @@
 package tree.event;
 
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.guild.GenericGuildEvent;
 import net.dv8tion.jda.core.events.message.GenericMessageEvent;
 import tree.Config;
@@ -16,7 +17,6 @@ public class TreeListener extends ListenerAdapter {
     private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L, 337641574249005065L};
     private static final long[] TREES_CHANNELS = {249791455592316930L, 269577202016845824L, 346493255896268802L};
 
-
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event == null || event.getChannel() == null) {
             return;
@@ -28,7 +28,8 @@ public class TreeListener extends ListenerAdapter {
                 return;
             }
         } else {
-            if (event.getGuild() == null || !inTreesChannel(event)) {
+            if (!event.getChannelType().isGuild() ||
+                    !isAllowedTextChannel(event.getGuild(), event.getTextChannel())) {
                 return;
             }
         }
@@ -48,6 +49,11 @@ public class TreeListener extends ListenerAdapter {
             }
         }
         return false;
+    }
+
+    private boolean isAllowedTextChannel(Guild guild, MessageChannel msgChan) {
+        long textChanId = msgChan.getIdLong();
+        return Config.isAllowedTextChannel(guild, textChanId);
     }
 
     private boolean inTreesChannel(MessageReceivedEvent event) {

@@ -21,11 +21,11 @@ public class LeaveCommand implements MusicCommand {
 
     public LeaveCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayer;
+        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void leave(Guild guild, MessageChannel msgChan, Message message, Member member) {
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayer.getGuildAudioPlayer(guild);
+        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter.getGuildAudioPlayer(guild);
         musicManager.player.setPaused(true);
         guild.getAudioManager().closeAudioConnection();
     }

@@ -44,14 +44,16 @@ public class MusicCommandFactory extends AbstractCommandFactory {
                 return new LeaveCommand("leave");
             case "join":
                 return new JoinCommand("join");
-            case "musicCommands":
-                return new MusicCommandsCommand("musicCommands");
+            case "musichelp":
+                return new MusicHelpCommand("musichelp");
             case "cnl":
                 return new CancelCommand("cnl");
             case "req":
                 return new RequestCommand("req");
             case "undo":
                 return new UndoCommand("undo");
+            case "np":
+                return new NowPlayingCommand("np");
             default:
                 return null;
         }

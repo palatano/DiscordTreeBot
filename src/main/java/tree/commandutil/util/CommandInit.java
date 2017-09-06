@@ -18,10 +18,11 @@ import java.util.Map;
 public class CommandInit {
     private static final String[] textCommands = {"test", "commands"};
     private static final String[] pictureCommands = {"nugget"};
-    private static final String[] analysisCommands = {"info", "uniqueusers", "search", "ping", "youtube"};
+    private static final String[] analysisCommands = {"info", "uniqueusers", "search",
+            "ping", "youtube", "set", "unset", "guildpermissions"};
     private static final String[] voiceCommands = {"voicesearch", "echo"};
     private static final String[] musicCommands = {"add", "skip", "pause", "list", "unpause",
-            "leave", "join", "musicCommands", "cnl", "req", "undo"};
+            "leave", "join", "musichelp", "cnl", "req", "undo", "np"};
 
     private static Logger log = LoggerFactory.getLogger(CommandInit.class);
 
@@ -46,14 +47,14 @@ public class CommandInit {
             commandList.put(currCommand.getCommandName(), currCommand);
         }
 
-        // Next, add the analysis commands.
+        // Next, add the voice commands.
         abstractFactory = FactoryProducer.getFactory("VOICE");
         for (String voiceCommand : voiceCommands) {
             Command currCommand = abstractFactory.getVoiceCommand(voiceCommand);
             commandList.put(currCommand.getCommandName(), currCommand);
         }
 
-        // Next, add the analysis commands.
+        // Next, add the music commands.
         abstractFactory = FactoryProducer.getFactory("MUSIC");
         for (String musicCommand : musicCommands) {
             Command currCommand = abstractFactory.getMusicCommand(musicCommand);
