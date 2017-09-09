@@ -1,2 +1,2 @@
-# discord-dau
-Discord bot for analysis of Daily Active Users (DAUs)
+# TreeBot
+Automated Discord Bot that provides multiple features for music, searching, and customization.
