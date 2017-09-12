@@ -143,9 +143,11 @@ public class TrackScheduler extends AudioEventAdapter {
         list += "``Now Playing:`` " + currentSongInfo.title + " " + getSongDuration(currentSongInfo.length) +
                 ", added by ``" + currMember.getEffectiveName() + "``\n\n";
         if (!queue.isEmpty()) {
-            AudioTrackInfo nextSong = queue.peek().getInfo();
-            list += "``Next Song``: " + nextSong.title + " " + getSongDuration(currentSongInfo.length) +
-                    ", added by ``" + currMember.getEffectiveName() + "``\n";
+            AudioTrack nextTrack = queue.peek();
+            Member nextMember = personAddedMap.get(nextTrack);
+            AudioTrackInfo nextTrackInfo = nextTrack.getInfo();
+            list += "``Next Song``: " + nextTrackInfo.title + " " + getSongDuration(nextTrackInfo.length) +
+                    ", added by ``" + nextMember.getEffectiveName() + "``\n";
         }
         return list;
     }

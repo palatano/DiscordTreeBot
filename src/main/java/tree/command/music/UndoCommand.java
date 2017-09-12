@@ -6,6 +6,7 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 
 /**
@@ -27,7 +28,7 @@ public class UndoCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Undo the last song added.";
+        return "``" + CommandManager.botToken + commandName + "``: Undo the last song added.";
     }
 
     @Override

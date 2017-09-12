@@ -62,10 +62,7 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     @Override
     public String help() {
-        return "Type " +
-                CommandManager.botToken +
-                getCommandName() +
-                " to say something and get results from google.";
+        return "``" + CommandManager.botToken + commandName + "``: get results from google.";
     }
 
     @Override

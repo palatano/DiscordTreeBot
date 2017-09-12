@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -41,7 +42,7 @@ public class LeaveCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Leave the music channel.";
+        return "``" + CommandManager.botToken + commandName + "``: Leave the music channel.";
     }
 
     @Override

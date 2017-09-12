@@ -31,6 +31,8 @@ public class AnalysisCommandFactory extends AbstractCommandFactory {
                 return new UnsetCommand("unset");
             case "guildpermissions":
                 return new GuildPermissionsCommand("guildpermissions");
+            case "shutdown":
+                return new ShutdownCommand("shutdown");
             default:
                 return null;
         }

@@ -1,5 +1,6 @@
 package tree.command.text;
 
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.TextCommand;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
@@ -18,7 +19,7 @@ public class TestCommand implements TextCommand {
 
     @Override
     public String help() {
-        return "Tests if the bot is online with a :joy: emoji.";
+        return "``" + CommandManager.botToken + commandName + "``: Tests if the bot is online with a :joy: emoji.";
     }
 
     @Override

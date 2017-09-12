@@ -33,6 +33,7 @@ public class Config {
     public static Map<Long, Set<Long>> guildAllowedTextChannels;
     public static Map<Long, Set<Long>> guildAllowedVoiceChannels;
     public static Map<Long, Set<Long>> guildAdmins;
+    public static long startTime;
 
     public static Map<Long, Set<Long>> getGuildAllowedTextChannels() {
         return guildAllowedTextChannels;
@@ -461,7 +462,6 @@ public class Config {
             } else {
                 isTesting = false;
             }
-<<<<<<< HEAD
             guildFilePaths = new HashMap<>();
 
             guildAllowedTextChannels = new HashMap<>();
@@ -479,38 +479,7 @@ public class Config {
                 initializeGuildData(guildFile, creds);
             }
 
-=======
-
-            // Check if the guild database exists. If not, create.
-            if (JDBCInit.hasTable("guilds")) {
-                JDBCInit.createTable("guilds", "guildname VARCHAR(32)");
-            }
-
-            // Get the guilds to prepare.
-            String guildsWithSettings = (String) creds.get("guildsWithSettings");
-            String[] guilds = guildsWithSettings.split(", ");
-            // Each consecutive guild should have a field in the yaml file, which is the channels
-            // that allow bot commands to be in.
-            for (String guild : guilds) {
-                if (guild == null) {
-                    System.out.println("There is no corresponding guild in the yaml.");
-                    continue;
-                }
-                if (!JDBCInit.hasTable(guild)) {
-                    JDBCInit.createTable(guild,
-                            "permitted_channels BIGINT(64)",
-                            "admin_roles VARCHAR(32)");
-                }
-                String guildChanString = (String) creds.get(guild);
-                String[] guildChannels = guildChanString.split(", ");
-
-                //
-//                JDBCInit.insertGuildsInfo("guilds");
-
-            }
->>>>>>> 0e6deb51c7e1bd24641c43c269b52756f3dcade6
-
-
+            startTime = System.currentTimeMillis();
         } catch (IOException e) {
             System.out.println("File cannot be opened. Exception: " + e + ".");
             throw new NullPointerException();

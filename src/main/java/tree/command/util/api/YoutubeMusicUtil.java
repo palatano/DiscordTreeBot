@@ -11,6 +11,7 @@ import com.sun.org.apache.regexp.internal.RE;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.AudioManager;
+import tree.command.data.MessageWrapper;
 import tree.command.music.AddCommand;
 import tree.command.music.RequestCommand;
 import tree.command.util.AuthUtil;
@@ -44,7 +45,7 @@ public class YoutubeMusicUtil {
     private String youtubeAPIKey;
     private static final String[] AUTHORIZED_ROLES = {"Discord DJ", "Moderator"}; //TODO - Read this from file.
     private static MenuUtil menuUtil;
-    public static final int MAX_RESULTS = 4;
+    public static final int MAX_RESULTS = 3;
 
     private YoutubeMusicUtil() {
         youtube = new YouTube.Builder(AuthUtil.HTTP_TRANSPORT, AuthUtil.JSON_FACTORY, new HttpRequestInitializer() {
@@ -61,18 +62,9 @@ public class YoutubeMusicUtil {
     }
 
     public int youtubeSearch(String query, Guild guild,
-                             MessageChannel msgChan, Message message, Member member,
-                             String commandName, AtomicInteger atomInt, List<String> songsToChoose,
-                             AtomicLong menuId) {
+                             MessageChannel msgChan, MessageWrapper menuWrapper, Member member,
+                             String commandName, AtomicInteger atomInt, List<String> songsToChoose) {
         try {
-//            atomInt.set(0);
-            // This object is used to make YouTube Data API requests. The last
-            // argument is required, but since we don't need anything
-            // initialized when the HttpRequest is initialized, we override
-            // the interface and provide a no-op function.
-            YouTube.Search.List search = youtube.search().list("id,snippet");
-            initializeSearchFields(search, query);
-
             // If given a direct URL, get the result and complete the search.
             if (isDirectYoutubeURL(query, msgChan) == 1) {
                 // Add the song.
@@ -85,12 +77,19 @@ public class YoutubeMusicUtil {
                             commandName +
                             " 1``.";
                     songsToChoose.add(query);
-                    menuId.set(msgChan.sendMessage(directString).complete().getIdLong());
+                    menuWrapper.setMessage(msgChan.sendMessage(directString).complete());
                     return 0;
                 }
             } else if (isDirectYoutubeURL(query, msgChan) == 2) {
                 return -1;
             }
+
+            // This object is used to make YouTube Data API requests. The last
+            // argument is required, but since we don't need anything
+            // initialized when the HttpRequest is initialized, we override
+            // the interface and provide a no-op function.
+            YouTube.Search.List search = youtube.search().list("id,snippet");
+            initializeSearchFields(search, query);
 
             // Fetch the search results.
             SearchListResponse searchResponse = search.execute();
@@ -109,10 +108,7 @@ public class YoutubeMusicUtil {
             } else if (commandName.equals("req")) {
                 messageString += "**Authorized Users";
             }
-            messageString += "**: Choose your song with ``" +
-                    CommandManager.botToken +
-                    commandName +
-                    " #``.\n\n";
+            messageString += "**: Choose your song:\n\n";
 
             while (iteratorSearchResults.hasNext()) {
                 SearchResult singleVideo = iteratorSearchResults.next();
@@ -124,7 +120,7 @@ public class YoutubeMusicUtil {
                     messageString += getMessageString(singleVideo, rId, atomInt, songsToChoose) + "\n";
                 }
             }
-            menuId.set(msgChan.sendMessage(messageString).complete().getIdLong());
+            menuWrapper.setMessage(msgChan.sendMessage(messageString).complete());
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
                     + e.getDetails().getMessage());
@@ -195,7 +191,7 @@ public class YoutubeMusicUtil {
      */
     private int isDirectYoutubeURL(String query, MessageChannel msgChan) {
         // If the user entered a URL, there should be only one selection AND it should only be youtube.
-        if (query.contains(".com")) {
+        if (query.contains("youtu.be") || query.contains(".com")) {
             if (query.contains("youtu")) {
                 return 1;
             } else {
@@ -227,16 +223,5 @@ public class YoutubeMusicUtil {
         return menuUtil;
     }
 
-    //    public boolean menuIsOpen(Command currCommand, MessageChannel msgChan) {
-//        if (currCommand instanceof AddCommand) {
-//            AddCommand addCommand = (AddCommand) currCommand;
-//            return addCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, addCommand.getCommandName());
-//        } else if (currCommand instanceof RequestCommand) {
-//            RequestCommand reqCommand = (RequestCommand) currCommand;
-//            return reqCommand.hasMenu() && menuUtil.inSameMessageChannel(msgChan, reqCommand.getCommandName());
-//        }
-//        System.out.println("SHOULD NOT BE REACHED.");
-//        return false;
-//    }
 
 }

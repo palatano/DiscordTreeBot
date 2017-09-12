@@ -136,7 +136,8 @@ public class PlaylistCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Returns the current song list.";
+        return "``" + CommandManager.botToken + commandName + "``: Returns the current song list." +
+                " Turn on/off automatic playlist posting with ;list [on|off]";
     }
 
     @Override

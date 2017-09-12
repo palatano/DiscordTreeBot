@@ -117,7 +117,7 @@ public class GoogleSearchCommand implements AnalysisCommand {
 
     @Override
     public String help() {
-        return "Returns the first three search results from a google search query.";
+        return "``" + CommandManager.botToken + commandName + " [search]``: Returns the first three search results from a google search query.";
     }
 
     @Override

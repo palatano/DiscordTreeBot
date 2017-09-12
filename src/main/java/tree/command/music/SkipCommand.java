@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -38,7 +39,7 @@ public class SkipCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Skip the current song.";
+        return "``" + CommandManager.botToken + commandName + "``: Skip the current song.";
     }
 
     @Override

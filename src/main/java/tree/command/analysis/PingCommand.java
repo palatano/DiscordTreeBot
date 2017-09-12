@@ -4,6 +4,7 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
 import java.time.temporal.ChronoUnit;
@@ -30,7 +31,7 @@ public class PingCommand implements AnalysisCommand {
 
     @Override
     public String help() {
-        return "Returns the latency of the bot.";
+        return "``" + CommandManager.botToken + commandName + "``: Returns the latency of the bot.";
     }
 
     @Override

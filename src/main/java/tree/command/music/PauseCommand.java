@@ -45,7 +45,7 @@ public class PauseCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Pause the song.";
+        return "``" + CommandManager.botToken + commandName + "``: Pause the song.";
     }
 
     @Override

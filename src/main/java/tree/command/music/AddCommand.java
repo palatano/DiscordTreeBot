@@ -1,12 +1,16 @@
 package tree.command.music;
 
+import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.Config;
 import tree.command.data.MenuSelectionInfo;
+import tree.command.data.MessageWrapper;
+import tree.command.data.ReactionMenu;
 import tree.command.util.MessageUtil;
 import tree.command.util.api.YoutubeMusicUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -42,21 +46,27 @@ public class AddCommand implements MusicCommand {
         };
     }
 
+    public boolean isSelectingUser(Guild guild, long userId) {
+        return guildToUserMap.get(guild).containsKey(userId);
+    }
+
     private void addSelectionEntry(Guild guild, long userId, MenuSelectionInfo msInfo) {
-        if (!guildToUserMap.containsKey(guild)) {
-            guildToUserMap.put(guild, new HashMap<>());
-        }
         Map<Long, MenuSelectionInfo> userSelectionMap =
                 guildToUserMap.get(guild);
         userSelectionMap.put(userId, msInfo);
+
+        Message message = msInfo.getMenu();
+        ReactionMenu reactionMenu = new ReactionMenu(commandName, userId,
+                msInfo.getChannel());
+
+        CommandManager.addReactionMenu(guild, msInfo.getMenu().getIdLong(),
+                reactionMenu);
+        message.addReaction("\u0031\u20E3").queue();
+        message.addReaction("\u0032\u20E3").queue();
+        message.addReaction("\u0033\u20E3").queue();
     }
 
     private void deleteSelectionEntry(Guild guild, long userId) {
-        if (!guildToUserMap.containsKey(guild)) {
-            System.out.println("Bot is attempting to remove a user and its selection from" +
-                    " a non-existent guild.");
-            return;
-        }
         Map<Long, MenuSelectionInfo> userSelectionMap = guildToUserMap.get(guild);
         if (!userSelectionMap.containsKey(userId)) {
             System.out.println("Bot is attempting to remove a non-existent user.");
@@ -64,12 +74,14 @@ public class AddCommand implements MusicCommand {
         }
         MenuSelectionInfo msInfo = userSelectionMap.get(userId);
         ScheduledFuture<?> task = msInfo.getTask();
-        long menuId = msInfo.getMenuId();
+        long menuId = msInfo.getMenu().getIdLong();
         MessageChannel msgChan = msInfo.getChannel();
         if (menuId != 0) {
             msgChan.deleteMessageById(menuId).queue();
         }
         userSelectionMap.remove(userId);
+        CommandManager.removeReactionMenu(guild, menuId);
+
         if (!task.isCancelled() || !task.isDone()) {
             task.cancel(true);
         }
@@ -85,7 +97,7 @@ public class AddCommand implements MusicCommand {
         }
         Map<Long, MenuSelectionInfo> userInfoMap = guildToUserMap.get(guild);
         if (userInfoMap.containsKey(userId)) {
-            if (userInfoMap.get(userId).getMenuId() == 0) {
+            if (userInfoMap.get(userId).getMenu().getIdLong() == 0) {
                 userInfoMap.remove(userId);
                 System.out.println("Error, this should not happen.");
                 return false;
@@ -118,6 +130,21 @@ public class AddCommand implements MusicCommand {
         guildToUserMap = new HashMap<>();
     }
 
+    public void optionConfirmed(Guild guild, MessageChannel msgChan,
+                                Member member, int option, long menuId) {
+
+        long userId = member.getUser().getIdLong();
+        Map<Long, MenuSelectionInfo> userChannelMap = guildToUserMap.get(guild);
+
+        if (userChannelMap.containsKey(userId)) {
+            MenuSelectionInfo msInfo = userChannelMap.get(userId);
+            String url = ytUtil.getSongURL(option, msgChan, (List<String>) msInfo.getSongsToChoose());
+            ytUtil.addSong(guild, msgChan, commandName, member, url);
+            reset(guild, member.getUser().getIdLong());
+        }
+
+    }
+
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
@@ -125,6 +152,11 @@ public class AddCommand implements MusicCommand {
             LoggerUtil.logMessage(logger, message, "Only one argument allowed.");
             MessageUtil.sendError("Please provide a song or selection.", msgChan);
             return;
+        }
+
+        // If guild is not set in the map yet, set it.
+        if (!guildToUserMap.containsKey(guild)) {
+            guildToUserMap.put(guild, new HashMap<>());
         }
 
         if (!member.getVoiceState().inVoiceChannel()) {
@@ -139,7 +171,7 @@ public class AddCommand implements MusicCommand {
         }
 
         String search = ytUtil.getQuery(args);
-        if (!ytUtil.authorizedUser(guild, member)) { // || ytUtil.menuIsOpen(this, msgChan)
+        if (!ytUtil.authorizedUser(guild, member)) {
             message.addReaction("\u274E").queue();
             return;
         }
@@ -147,71 +179,72 @@ public class AddCommand implements MusicCommand {
         // Check if the user is already made a selection.
         // Continue with the load if the song is added.
         long userId = member.getUser().getIdLong();
-        if (MessageUtil.checkIfInt(search)) {
-            if (!hasMenu(guild, userId)) {
-                MessageUtil.sendError(
-                        "You need to search for the song first.",
-                        msgChan);
-                return;
-            }
-            // Check if the user has a selection menu running.
-            Map<Long, MenuSelectionInfo> userChannelMap = guildToUserMap.get(guild);
-            long channelId = msgChan.getIdLong();
-            if (userChannelMap.containsKey(userId)) {
-                MenuSelectionInfo msInfo = userChannelMap.get(userId);
-                if (msInfo.getChannel().getIdLong() != channelId) {
-                    MessageUtil.sendError("You must select in the same channel" +
-                            " where the menu is posted.", msgChan);
-                    return;
-                }
-                int index = Integer.parseInt(search);
-                String url = ytUtil.getSongURL(index, msgChan, (List<String>) msInfo.getSongsToChoose());
-                if (url == null) {
-                    return;
-                }
-                ytUtil.addSong(guild, msgChan, commandName, member, url);
-                reset(guild, member.getUser().getIdLong());
-            } else {
-                MessageUtil.sendError(
-                        "You need to search for the song first.",
-                        msgChan);
-                return;
-            }
-        } else {
+//        if (MessageUtil.checkIfInt(search)) {
+//            if (!hasMenu(guild, userId)) {
+//                MessageUtil.sendError(
+//                        "You need to search for the song first.",
+//                        msgChan);
+//                return;
+//            }
+//            // Check if the user has a selection menu running.
+//            Map<Long, MenuSelectionInfo> userChannelMap = guildToUserMap.get(guild);
+//            long channelId = msgChan.getIdLong();
+//            if (userChannelMap.containsKey(userId)) {
+//                MenuSelectionInfo msInfo = userChannelMap.get(userId);
+//                if (msInfo.getChannel().getIdLong() != channelId) {
+//                    MessageUtil.sendError("You must select in the same channel" +
+//                            " where the menu is posted.", msgChan);
+//                    return;
+//                }
+//                int index = Integer.parseInt(search);
+//                String url = ytUtil.getSongURL(index, msgChan, (List<String>) msInfo.getSongsToChoose());
+//                if (url == null) {
+//                    return;
+//                }
+//                ytUtil.addSong(guild, msgChan, commandName, member, url);
+//                reset(guild, member.getUser().getIdLong());
+//            } else {
+//                MessageUtil.sendError(
+//                        "You need to search for the song first.",
+//                        msgChan);
+//                return;
+//            }
+//        } else {
 
             if (hasMenu(guild, userId)) {
                 reset(guild, userId);
             }
-            AtomicLong menuId = new AtomicLong(0);
+            List<String> songsToChoose = new ArrayList<>();
 
             ScheduledFuture<?> newTask = ytUtil.getMenuUtil()
                     .createMenuTask(createRunnable(guild, msgChan, member),
                             null, 20);
-            List<String> songsToChoose = new ArrayList<>();
 
             // Allow the user to keep searching for a song
             // until a number command is made.
             // Return if direct URL search or error has occurred.
-            if (ytUtil.youtubeSearch(search, guild, msgChan, message,
-                    member, getCommandName(), new AtomicInteger(), songsToChoose, menuId) == -1) {
+            MessageWrapper msgWrapper = new MessageWrapper();
+            if (ytUtil.youtubeSearch(search, guild, msgChan, msgWrapper,
+                    member, getCommandName(), new AtomicInteger(), songsToChoose) == -1) {
                 if (!newTask.isCancelled() || !newTask.isDone()) {
                     newTask.cancel(true);
                 }
                 return;
             }
 
-            MenuSelectionInfo msInfo = new MenuSelectionInfo(menuId.get(), msgChan,
-                    songsToChoose, newTask);
+            MenuSelectionInfo msInfo = new MenuSelectionInfo(msgWrapper.getMessage(),
+                    msgChan, songsToChoose, newTask);
             // Create a new menu selection info class.
             addSelectionEntry(guild, member.getUser().getIdLong(),
                     msInfo);
 
-        }
+
     }
 
     @Override
     public String help() {
-        return "Adds the song with either a keyword search or a direct URL.";
+        return "``" + CommandManager.botToken + commandName +
+                " [song]``: Adds the song with either a keyword search or a direct URL.";
     }
 
     @Override

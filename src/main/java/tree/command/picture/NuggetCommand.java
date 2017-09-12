@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import tree.Config;
 import tree.command.util.MessageUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.PictureCommand;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
@@ -63,7 +64,7 @@ public class NuggetCommand implements PictureCommand {
 
     @Override
     public String help() {
-        return "Sends a random nugget picture to chat.";
+        return "``" + CommandManager.botToken + commandName + "``: Sends a random nugget picture to chat.";
     }
 
     @Override

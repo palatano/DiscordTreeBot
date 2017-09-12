@@ -210,7 +210,7 @@ public class InfoCommand implements AnalysisCommand {
 
     @Override
     public String help() {
-        return "Returns your join date to the server. If you have left/been kicked \n" +
+        return "``" + CommandManager.botToken + commandName + " [name] ``: Returns your join date to the server. If you have left/been kicked \n" +
                 "the join date will be the day you rejoined.";
     }
 

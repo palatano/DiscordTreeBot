@@ -9,6 +9,7 @@ import tree.command.util.MessageUtil;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 import tree.command.util.speech.AudioReceiveListener;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
 import tree.util.LoggerUtil;
 
@@ -47,7 +48,7 @@ public class JoinCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Join the music channel.";
+        return "``" + CommandManager.botToken + commandName + "``: Join the music channel.";
     }
 
     @Override

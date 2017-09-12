@@ -7,6 +7,7 @@ import net.dv8tion.jda.core.entities.MessageChannel;
 import tree.command.analysis.InfoCommand;
 import tree.command.util.MenuUtil;
 import tree.command.util.api.YoutubeMusicUtil;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.Command;
 import tree.commandutil.type.MusicCommand;
 import tree.commandutil.util.CommandRegistry;
@@ -55,7 +56,7 @@ public class CancelCommand implements MusicCommand {
 
     @Override
     public String help() {
-        return "Cancels the current menu, if open.";
+        return "``" + CommandManager.botToken + commandName + "``: Cancels the current menu, if open.";
     }
 
     @Override

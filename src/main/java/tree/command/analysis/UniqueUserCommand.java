@@ -8,6 +8,7 @@ import tree.command.util.DataUtil;
 
 //import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.*;
+import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
 import java.time.OffsetDateTime;
@@ -161,7 +162,7 @@ public class UniqueUserCommand implements AnalysisCommand {
 
     @Override
     public String help() {
-        return "Gives an excel file with the unique user name, time stamp, and message.";
+        return "``" + CommandManager.botToken + commandName + " [date]``: Gives an excel file with the unique user name, time stamp, and message.";
     }
 
     @Override
