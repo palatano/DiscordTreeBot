@@ -17,10 +17,13 @@ import org.jsoup.select.Elements;
 import tree.Config;
 import tree.command.data.GoogleResults;
 import tree.command.data.MenuSelectionInfo;
+import tree.command.data.MessageWrapper;
+import tree.command.data.ReactionMenu;
 import tree.command.util.AuthUtil;
 import tree.command.util.MessageUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
+import tree.commandutil.util.CommandRegistry;
 
 import java.awt.*;
 import java.io.IOException;
@@ -40,7 +43,6 @@ import java.util.Map;
 public class YoutubeCommand implements AnalysisCommand {
     private String commandName;
     private String userAgent;
-    private static int counter;
     private YouTube youtube;
     private Map<Guild, Map<Long, MenuSelectionInfo>> guildToUserMap;
     private Map<Guild, Map<Long, Long>> guildToIndexMap;
@@ -70,11 +72,84 @@ public class YoutubeCommand implements AnalysisCommand {
         guildToIndexMap.get(guild).put(member.getUser().getIdLong(), index);
     }
 
-    private void removeSelectionEntry(Guild guild, MessageChannel msgChan,
+    private MenuSelectionInfo removeSelectionEntry(Guild guild, MessageChannel msgChan,
                                       Member member) {
         long userId = member.getUser().getIdLong();
-        guildToIndexMap.get(guild).remove(userId);
-        guildToUserMap.get(guild).remove(userId);
+        Map<Long, MenuSelectionInfo> userSelectionMap = guildToUserMap.get(guild);
+        if (!userSelectionMap.containsKey(userId)) {
+            System.out.println("Bot is attempting to remove a non-existent user.");
+            return null;
+        }
+
+        long index = 0;
+        if (guildToIndexMap.get(guild).containsKey(userId)) {
+            index = guildToIndexMap.get(guild).remove(userId);
+        } else {
+            System.out.println("Trying to remove a non-existent user.");
+        }
+
+        MenuSelectionInfo msInfo = userSelectionMap.remove(userId);
+        long menuId = msInfo.getMenu().getIdLong();
+        MessageChannel messageChannel = msInfo.getChannel();
+        if (menuId != 0) {
+            messageChannel.deleteMessageById(menuId).queue();
+        }
+        CommandManager.removeReactionMenu(guild, menuId);
+        return msInfo;
+    }
+
+    public boolean isSelectingUser(Guild guild, Member member) {
+        return guildToUserMap.get(guild).containsKey(member.getUser().getIdLong());
+    }
+
+    public void nextOption(Guild guild, MessageChannel msgChan, Member member, long menuId) {
+        long userId = member.getUser().getIdLong();
+        Map<Long, MenuSelectionInfo> menuSelectionInfoMap = guildToUserMap.get(guild);
+        Map<Long, Long> indexMap = guildToIndexMap.get(guild);
+        long index = indexMap.get(userId);
+        MenuSelectionInfo prevMsInfo = menuSelectionInfoMap.get(userId);
+
+        boolean hasNextOption = true;
+        if (++index >= MAX_RESULTS) {
+            hasNextOption = false;
+        }
+        guildToIndexMap.get(guild).put(userId, index);
+
+        MessageWrapper msgWrapper = new MessageWrapper();
+        List<SearchResult> newList = getNextResult(guild, member, msgChan, msgWrapper, hasNextOption);
+        if (newList == null) {
+            return;
+        }
+
+        // Delete the previous menu.
+        if (hasMenu(guild, userId)) {
+            removeSelectionEntry(guild, msgChan, member);
+        }
+
+            MenuSelectionInfo msInfo =
+                    new MenuSelectionInfo(msgWrapper.getMessage(), msgChan,
+                            newList, null);
+            addSelectionEntry(guild, msgChan, member, msInfo, index);
+            ReactionMenu menu = new ReactionMenu(commandName, userId, msgChan);
+            CommandManager.addReactionMenu(guild,
+                    msgWrapper.getMessage().getIdLong(), menu);
+
+    }
+
+    public boolean hasMenu(Guild guild, long userId) {
+        if (!guildToUserMap.containsKey(guild)) {
+            return false;
+        }
+        Map<Long, MenuSelectionInfo> userInfoMap = guildToUserMap.get(guild);
+        if (userInfoMap.containsKey(userId)) {
+            if (userInfoMap.get(userId).getMenu().getIdLong() == 0) {
+                userInfoMap.remove(userId);
+                System.out.println("Error, this should not happen.");
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     public YoutubeCommand(String commandName) {
@@ -93,7 +168,8 @@ public class YoutubeCommand implements AnalysisCommand {
         }).setApplicationName("TreeBot").build();
     }
 
-    private void youtubeSearch(String query, Guild guild, MessageChannel msgChan, Member member) {
+    private void youtubeSearch(String query, Guild guild,
+                               MessageChannel msgChan, Member member) {
         try {
             // Define the API request for retrieving search results.
             YouTube.Search.List search = youtube.search().list("id,snippet");
@@ -110,13 +186,25 @@ public class YoutubeCommand implements AnalysisCommand {
             }
 
             // Create the index, and assign the MenuSelectionInfo.
-            long index = 0;
-            MenuSelectionInfo msInfo = new MenuSelectionInfo(null, msgChan, resultList, null);
+            long index = 1;
+            long userId = member.getUser().getIdLong();
+
+            MessageWrapper msgWrapper = new MessageWrapper();
+
+            addSelectionEntry(guild, msgChan, member,
+                    new MenuSelectionInfo(null, msgChan, resultList, null), index);
+            List<SearchResult> newList =
+                    getNextResult(guild, member, msgChan, msgWrapper, true);
+            if (newList == null) {
+                return;
+            }
+
+            MenuSelectionInfo msInfo = new MenuSelectionInfo(msgWrapper.getMessage(),
+                    msgChan, newList, null);
             addSelectionEntry(guild, msgChan, member, msInfo, index);
-
-
-
-//            getNextResult(query, msgChan);
+            ReactionMenu menu = new ReactionMenu(commandName, userId, msgChan);
+            CommandManager.addReactionMenu(guild,
+                    msgWrapper.getMessage().getIdLong(), menu);
 
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
@@ -128,32 +216,6 @@ public class YoutubeCommand implements AnalysisCommand {
         }
     }
 
-    @Deprecated
-    private EmbedBuilder getMessageEmbed(SearchResult singleVideo, ResourceId rId, EmbedBuilder embed) {
-        String result = "";
-        String author = singleVideo.getSnippet().getChannelTitle();
-        String videoTitle = singleVideo.getSnippet().getTitle();
-        String desc = singleVideo.getSnippet().getDescription();
-
-        String beginning = videoTitle;
-        String channel = ++counter + ") " + "Channel: " + author;
-        String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();
-        result += "Video result: " + url;
-        embed.setTitle(channel);
-        embed.setDescription("[" + beginning + "](" + url + ")");
-        embed.appendDescription("\n" + "**Video description: **" + desc);
-        Thumbnail thumbnail = singleVideo.getSnippet().getThumbnails().getDefault();
-        embed.setThumbnail(thumbnail.getUrl());
-        if (counter == 1) {
-            embed.addField("Not the video you wanted?", "Type \"" +
-                    CommandManager.botToken +
-                    getCommandName() +
-                    " next\" for more"  +
-                    " (Up to two more).", true);
-        }
-        return embed;
-    }
-
     private String getMessageString(SearchResult singleVideo, ResourceId rId) {
         String result = "";
         String author = singleVideo.getSnippet().getChannelTitle();
@@ -161,31 +223,14 @@ public class YoutubeCommand implements AnalysisCommand {
         String desc = singleVideo.getSnippet().getDescription();
 
         String beginning = videoTitle;
-        String channel = ++counter + ") " + "Channel: " + author;
+//        String channel = ++counter + ") " + "Channel: " + author;
         String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();
-        switch (counter) {
-            case 1:
-                result += "Video result: (" + url + ")\nNot this one? Type \"" +
-                        CommandManager.botToken +
-                        getCommandName() +
-                        " next\" for more (Up to two more).";
-                break;
-            case 2:
-                result += "Video result: (" + url + ")\nNot this one? Type \"" +
-                        CommandManager.botToken +
-                        getCommandName() +
-                        " next\" for more (Up to one more).";
-                break;
-            case 3:
-                result += "Video result: (" + url + ")";
-                break;
-            default:
-                System.out.println("Should not be reached. Error.");
-                break;
-        }
+        result += "Video result: (" + url + ")";
         return result;
 
     }
+
+
 
     /*
  * Prints out all results in the Iterator. For each result, print the
@@ -195,44 +240,56 @@ public class YoutubeCommand implements AnalysisCommand {
  *
  * @param query Search query (String)
  */
-    private void getNextResult(Guild guild, Member member, MessageChannel msgChan) {
+    private List<SearchResult> getNextResult(Guild guild, Member member,
+                               MessageChannel msgChan, MessageWrapper msgWrapper,
+                               boolean hasNextOption) {
         long userId = member.getUser().getIdLong();
         MenuSelectionInfo msInfo = guildToUserMap.get(guild).get(userId);
-        List<SearchResult> searchResultList = (List<SearchResult>) msInfo.getSongsToChoose();
+        long resultIndex = guildToIndexMap.get(guild).get(userId);
+        if (msInfo == null) {
+            return null;
+        }
+
+        List<SearchResult> searchResultList =
+                (List<SearchResult>) msInfo.getSongsToChoose();
 
         if (searchResultList.isEmpty()) {
             System.out.println("No more results found.");
             MessageUtil.sendError("No more results found.", msgChan);
-            return;
-        }
-
-        Iterator<SearchResult> searchResultIterator = searchResultList.iterator();
-        while (searchResultIterator.hasNext()) {
-            
+            return null;
         }
 
         EmbedBuilder embed = new EmbedBuilder();
         String messageString = "";
+        if (resultIndex == 1) {
+            messageString += "First ";
+        } else if (resultIndex == 2) {
+            messageString += "Second ";
+        } else if (resultIndex == 3) {
+            messageString += "Last ";
+        }
 
-
-
-
-
-
-        while (iteratorSearchResults.hasNext()) {
-
-            SearchResult singleVideo = iteratorSearchResults.next();
+        Iterator<SearchResult> searchResultIterator = searchResultList.iterator();
+        int index = 0;
+        while (searchResultIterator.hasNext()) {
+            index++;
+            SearchResult singleVideo = searchResultIterator.next();
             ResourceId rId = singleVideo.getId();
 
             // Confirm that the result represents a video. Otherwise, the
             // item will not contain a video ID.
             if (rId.getKind().equals("youtube#video")) {
-                messageString = getMessageString(singleVideo, rId);
+                messageString += getMessageString(singleVideo, rId);
                 break;
             }
         }
-        msgChan.sendMessage(messageString).queue();
+        Message msg = msgChan.sendMessage(messageString).complete();
+        if (hasNextOption) {
+            msg.addReaction("⏭").queue();
+        }
+        msgWrapper.setMessage(msg);
 
+        return searchResultList.subList(index, searchResultList.size());
     }
 
     private String getQuery(String[] args) {
@@ -246,7 +303,8 @@ public class YoutubeCommand implements AnalysisCommand {
     private void checkIfGuildExists(Guild guild) {
         if (!guildToUserMap.containsKey(guild)) {
             guildToUserMap.put(guild, new HashMap<>());
-        } else if (!guildToIndexMap.containsKey(guild)) {
+        }
+        if (!guildToIndexMap.containsKey(guild)) {
             guildToIndexMap.put(guild, new HashMap<>());
         }
     }
@@ -259,50 +317,21 @@ public class YoutubeCommand implements AnalysisCommand {
             MessageUtil.sendError("No arguments added to the search command.", msgChan);
             return;
         }
-        String query = getQuery(args);
-        long userId = member.getUser().getIdLong();
         checkIfGuildExists(guild);
 
-        // If the user is currently searching for the next video.
-        if (query.equals("next")) {
-            if (!guildToUserMap.get(guild).containsKey(userId)) {
-                message.addReaction("\u274E").queue();
-                return;
-            }
-
-            MenuSelectionInfo msInfo = guildToUserMap.get(guild).get(userId);
-            long currIndex = guildToIndexMap.get(guild).get(userId);
-            long previousMenuId = msInfo.getMenu().getIdLong();
-            List<SearchResult> list = (List<SearchResult>) msInfo.getSongsToChoose();
-
-
-
-            // getNextResult() { ... }
-        } else {
-            youtubeSearch(query, guild, msgChan, member);
+        String query = getQuery(args);
+        long userId = member.getUser().getIdLong();
+        if (hasMenu(guild, userId)) {
+            removeSelectionEntry(guild, msgChan, member);
         }
 
-        // If the user is searching for the first time, or resets the search.
-
-
-//        if (counter >= 1 && search.equals("next")) {
-//            if (counter >= 3) {
-//                counter = 0;
-//            } else {
-//                getNextResult(iteratorSearchResults, origString, msgChan);
-//                return;
-//            }
-//        } else {
-//            counter = 0;
-//        }
-
-        // If the user
-
+        youtubeSearch(query, guild, msgChan, member);
     }
 
     @Override
     public String help() {
-        return "``" + CommandManager.botToken + commandName + " [search] ``: Returns the first three search results from Youtube.";
+        return "``" + CommandManager.botToken + commandName +
+                " [search] ``: Returns the first three search results from Youtube.";
     }
 
     @Override

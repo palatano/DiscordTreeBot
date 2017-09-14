@@ -39,11 +39,9 @@ public class CancelCommand implements MusicCommand {
         if (addCommand.hasMenu(guild, userId) &&
                 addCommand.inSameChannel(guild, userId, msgChan)) {
             addCommand.reset(guild, userId);
-//            menuUtil.deleteMenu(msgChan, addCommand.getCommandName());
         } else if (reqCommand.hasMenu(guild, userId) &&
                 reqCommand.inSameChannel(guild, userId, msgChan)) {
             reqCommand.reset(guild, userId);
-//            menuUtil.deleteMenu(msgChan, reqCommand.getCommandName());
         } else if (infoCommand.waitingForChoice()) {
             infoCommand.reset(msgChan);
             menuUtil.deleteMenu(msgChan, infoCommand.getCommandName());

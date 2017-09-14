@@ -14,8 +14,6 @@ public class CommandParser {
         if (arguments[0] != null && checkValidToken(msgContent)) {
             arguments[0] = arguments[0].replaceAll(";", "");
         } else {
-//            System.out.println("Something went wrong with parsing" +
-//                    " the tree.command in CommandParser. Error.");
             return null;
         }
         return arguments;

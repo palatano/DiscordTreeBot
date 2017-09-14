@@ -32,6 +32,11 @@ public class JoinCommand implements MusicCommand {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
             return;
         }
+
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
+        }
         AudioManager audioManager = guild.getAudioManager();
         audioManager.openAudioConnection(member.getVoiceState().getChannel());
         audioPlayer.connectToMusicChannel(guild.getAudioManager(), member);

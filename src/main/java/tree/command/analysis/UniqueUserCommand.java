@@ -162,7 +162,8 @@ public class UniqueUserCommand implements AnalysisCommand {
 
     @Override
     public String help() {
-        return "``" + CommandManager.botToken + commandName + " [date]``: Gives an excel file with the unique user name, time stamp, and message.";
+        return "``" + CommandManager.botToken + commandName +
+                " [date]``: Gives an excel file with the unique user name, time stamp, and message.";
     }
 
     @Override

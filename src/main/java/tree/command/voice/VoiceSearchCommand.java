@@ -56,8 +56,7 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        search(guild, msgChan, member);
-
+        MessageUtil.sendError("Command is currently being worked on.", msgChan);
     }
 
     @Override
@@ -77,9 +76,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         }
         AudioManager audioManager = guild.getAudioManager();
         AudioReceiveHandler lastAh = audioManager.getReceiveHandler();
-//        net.dv8tion.jda.core.audio.AudioSendHandler lastSh = audioManager.getSendingHandler();
         audioManager.setReceivingHandler(handler);
-//        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
         handler.reset();
 
         while (handler.uncompUserIndex < AudioReceiveListener.MAX_RECORD_TIME &&

@@ -18,7 +18,7 @@ import java.util.Map;
 public class CommandInit {
     private static final String[] textCommands = {"test", "help", "bot"};
     private static final String[] pictureCommands = {"nugget"};
-    private static final String[] analysisCommands = {"info", "uniqueusers", "search",
+    private static final String[] analysisCommands = {"info", "uniqueusers", "google",
             "ping", "youtube", "set", "unset", "guildpermissions", "shutdown"};
     private static final String[] voiceCommands = {"voicesearch", "echo"};
     private static final String[] musicCommands = {"add", "skip", "pause", "list", "unpause",

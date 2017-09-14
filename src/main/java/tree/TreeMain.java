@@ -16,19 +16,12 @@ import java.util.*;
  * Created by Valued Customer on 7/20/2017.
  */
 public abstract class TreeMain extends ListenerAdapter {
-    private CommandManager commandManager;
-    private TreeBot treeBot;
     private static TreeListener listener;
     private static final List<TreeMain> shards = new ArrayList<>();
     private static Logger log = LoggerFactory.getLogger(TreeMain.class);
 
     public static void main(String[] args) {
         log.info(">>>>>>>> TreeMain Start <<<<<<<<");
-//        SimpleLog.LEVEL = SimpleLog.Level.TRACE;
-
-        // Get the credentials file.
-//      JDBCInit db = new JDBCInit();
-//      db.init();
         Config.setUpConfig(args);
         log.info("Configuration is complete.");
 

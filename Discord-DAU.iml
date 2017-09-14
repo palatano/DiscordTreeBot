@@ -20,7 +20,7 @@
     <orderEntry type="library" name="edu.cmu.sphinx:sphinx4-core:5prealpha-SNAPSHOT" level="project" />
     <orderEntry type="library" name="edu.cmu.sphinx:sphinx4-data:5prealpha-SNAPSHOT" level="project" />
     <orderEntry type="library" name="org.apache.commons:commons-lang3:3.6" level="project" />
-    <orderEntry type="library" name="JDA-3.2.0_247-withDependencies" level="project" />
+    <orderEntry type="library" name="JDA-3.3.0_265-withDependencies" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Maven: com.google.api-client:google-api-client:1.22.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.oauth-client:google-oauth-client:1.22.0" level="project" />
@@ -149,7 +149,7 @@
     <orderEntry type="library" name="Maven: org.apache.xmlbeans:xmlbeans:2.6.0" level="project" />
     <orderEntry type="library" name="Maven: stax:stax-api:1.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.github.virtuald:curvesapi:1.04" level="project" />
-    <orderEntry type="library" name="Maven: net.dv8tion:JDA:3.2.0_247" level="project" />
+    <orderEntry type="library" name="Maven: net.dv8tion:JDA:3.3.0_265" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.1" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20160810" level="project" />

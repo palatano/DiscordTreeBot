@@ -30,8 +30,8 @@ public class RequestCommand implements MusicCommand {
     private String commandName;
     private YoutubeMusicUtil ytUtil;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
-    private AtomicBoolean waitingForChoice;
     private Map<Guild, Map<Long, MenuSelectionInfo>> guildToMenuMap;
+    private Map<Guild, Map<Long, String>> guildSongConfirmationMap;
 
     private Runnable createRunnable(Guild guild, MessageChannel msgChan, Member member) {
         return () -> {
@@ -45,7 +45,7 @@ public class RequestCommand implements MusicCommand {
     }
 
     public boolean hasMenu(Guild guild, long userId) {
-        if (!guildToMenuMap.containsKey(guild)) {
+        if (!guildToMenuMap.containsKey(guild) || !guildSongConfirmationMap.containsKey(guild)) {
             return false;
         }
         Map<Long, MenuSelectionInfo> userInfoMap = guildToMenuMap.get(guild);
@@ -60,20 +60,18 @@ public class RequestCommand implements MusicCommand {
         return false;
     }
 
+    public void onConfirmation(Guild guild, MessageChannel msgChan, Member member) {
+        long userId = member.getUser().getIdLong();
+        String url = guildSongConfirmationMap.get(guild).get(userId);
+        ytUtil.addSong(guild, msgChan, commandName, member, url);
+        reset(guild, userId);
+        guildSongConfirmationMap.get(guild).remove(userId);
+    }
+
     private void addSelectionEntry(Guild guild, long userId, MenuSelectionInfo msInfo) {
         Map<Long, MenuSelectionInfo> userSelectionMap =
                 guildToMenuMap.get(guild);
         userSelectionMap.put(userId, msInfo);
-
-        Message message = msInfo.getMenu();
-        ReactionMenu reactionMenu = new ReactionMenu(commandName, userId,
-                msInfo.getChannel());
-
-        CommandManager.addReactionMenu(guild, msInfo.getMenu().getIdLong(),
-                reactionMenu);
-        message.addReaction("\u0031\u20E3").queue();
-        message.addReaction("\u0032\u20E3").queue();
-        message.addReaction("\u0033\u20E3").queue();
     }
 
     public void optionConfirmed(Guild guild, MessageChannel msgChan,
@@ -85,8 +83,28 @@ public class RequestCommand implements MusicCommand {
         MenuSelectionInfo msInfo = userChannelMap.get(userId);
         String url = ytUtil.getSongURL(option, msgChan,
                 (List<String>) msInfo.getSongsToChoose());
-        ytUtil.addSong(guild, msgChan, commandName, member, url);
-        reset(guild, member.getUser().getIdLong());
+
+        guildSongConfirmationMap.get(guild).put(userId, url);
+        reset(guild, userId);
+
+        // Create the menu for confirmation.
+        Iterator<Long> iter = Config.getGuildAdmins().get(guild.getIdLong()).iterator();
+        String confirmationString = "";
+        if (iter.hasNext()) {
+            confirmationString += "**" + guild.getRoleById(iter.next()).getName() + ":** ";
+        } else {
+            confirmationString += "**Authorized Users:** ";
+        }
+        confirmationString += "Please confirm the song, requested by ``" + member.getEffectiveName() + "``";
+
+        Message menu = msgChan.sendMessage(confirmationString).complete();
+        menu.addReaction("\u2611").queue();
+        MenuSelectionInfo newMsInfo =
+                new MenuSelectionInfo(menu, msgChan, msInfo.getSongsToChoose(), msInfo.getTask());
+        addSelectionEntry(guild, userId, newMsInfo);
+
+        ReactionMenu reactionMenu = new ReactionMenu(commandName, userId, msgChan);
+        CommandManager.addReactionMenu(guild, menu.getIdLong(), reactionMenu);
     }
 
     private void deleteSelectionEntry(Guild guild, long userId) {
@@ -103,6 +121,8 @@ public class RequestCommand implements MusicCommand {
             msgChan.deleteMessageById(menuId).queue();
         }
         userSelectionMap.remove(userId);
+        CommandManager.removeReactionMenu(guild, menuId);
+
         if (!task.isCancelled() || !task.isDone()) {
             task.cancel(true);
         }
@@ -112,7 +132,7 @@ public class RequestCommand implements MusicCommand {
         this.commandName = commandName;
         guildToMenuMap = new HashMap<>();
         ytUtil = YoutubeMusicUtil.getInstance();
-        waitingForChoice = new AtomicBoolean(false);
+        guildSongConfirmationMap = new HashMap<>();
     }
 
     public boolean inSameChannel(Guild guild, long userId, MessageChannel msgChan) {
@@ -128,31 +148,15 @@ public class RequestCommand implements MusicCommand {
         return false;
     }
 
-    private boolean menusInChannel(Guild guild, MessageChannel msgChan) {
+
+    private void checkIfGuildExists(Guild guild) {
         if (!guildToMenuMap.containsKey(guild)) {
-            return false;
+            guildToMenuMap.put(guild, new HashMap<>());
         }
-        Map<Long, MenuSelectionInfo> menuInfoMap = guildToMenuMap.get(guild);
-        for (MenuSelectionInfo msInfo : menuInfoMap.values()) {
-            if (msInfo.getChannel().equals(msgChan)) {
-                return true;
-            }
+        if (!guildSongConfirmationMap.containsKey(guild)) {
+            guildSongConfirmationMap.put(guild, new HashMap<>());
         }
-        return false;
     }
-//
-//    private long retrieveNextSelection(Guild guild, MessageChannel msgChan) {
-//        // Get the selection that is in the right channel.
-//        ConcurrentLinkedQueue<Long> queue = guildQueueMap.get(guild);
-//        Map<Long, MenuSelectionInfo> userSelectionMap = guildToMenuMap.get(guild);
-//        for (long userId : queue) {
-//            MenuSelectionInfo msInfo = userSelectionMap.get(userId);
-//            if (msInfo.getChannel().equals(msgChan)) {
-//                return userId;
-//            }
-//        }
-//        return -1;
-//    }
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
@@ -162,9 +166,7 @@ public class RequestCommand implements MusicCommand {
             return;
         }
 
-        if (!guildToMenuMap.containsKey(guild)) {
-            guildToMenuMap.put(guild, new HashMap<>());
-        }
+        checkIfGuildExists(guild);
 
         if (!member.getVoiceState().inVoiceChannel()) {
             MessageUtil.sendError("You must be in a voice channel.", msgChan);
@@ -181,37 +183,6 @@ public class RequestCommand implements MusicCommand {
 
         String search = ytUtil.getQuery(args);
         long userId = member.getUser().getIdLong();
-        // Path 1: No query have been entered yet. ALLOW a non-authorized
-        // user to request and bring up the selection menu. Do not allow them to
-        // add though.
-
-//        if (MessageUtil.checkIfInt(search)) {
-//            // If not authorized OR there is no selection made yet.
-//            if (!ytUtil.authorizedUser(guild, member)) {
-//                message.addReaction("\u274E").queue();
-//                return;
-//            }
-//
-//            if (!menusInChannel(guild, msgChan)) {
-//                MessageUtil.sendError("There are no requests in this channel.", msgChan);
-//                return;
-//            }
-//
-//            long nextId = retrieveNextSelection(guild, msgChan);
-//            if (nextId == -1) {
-//                MessageUtil.sendError("There are no menus in this channel to choose from.", msgChan);
-//                return;
-//            }
-//            MenuSelectionInfo msInfo = guildToMenuMap.get(guild).get(nextId);
-//            int index = Integer.parseInt(search);
-//            String url = ytUtil.getSongURL(index, msgChan, (List<String>) msInfo.getSongsToChoose());
-//            if (url == null) {
-//                return;
-//            }
-//            ytUtil.addSong(guild, msgChan, commandName, member, url);
-//            reset(guild, nextId);
-//        } else {
-
             // Check if a previous menu exists.
             // If person has a menu but wants to re-enter it again, allow the if condition to fail.
             if (hasMenu(guild, userId)) {
@@ -241,12 +212,22 @@ public class RequestCommand implements MusicCommand {
             addSelectionEntry(guild, member.getUser().getIdLong(),
                     msInfo);
 
+            Message menu = msInfo.getMenu();
+            ReactionMenu reactionMenu = new ReactionMenu(commandName, userId,
+                msInfo.getChannel());
+
+            CommandManager.addReactionMenu(guild, msInfo.getMenu().getIdLong(),
+                    reactionMenu);
+            menu.addReaction("\u0031\u20E3").queue();
+            menu.addReaction("\u0032\u20E3").queue();
+            menu.addReaction("\u0033\u20E3").queue();
 
     }
 
     @Override
     public String help() {
-        return "``" + CommandManager.botToken + commandName + " [song]``: Allow a non-authorized user to request a song and an authorized user to add it.";
+        return "``" + CommandManager.botToken + commandName +
+                " [song]``: Allow a non-authorized user to request a song and an authorized user to add it.";
     }
 
     @Override

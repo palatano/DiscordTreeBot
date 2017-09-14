@@ -63,12 +63,13 @@ public class CommandManager {
     public static boolean messageCommand(Message message) {
         String msgText = message.getContent();
         String[] args = CommandParser.parseMessage(msgText);
-        Command command = CommandRegistry.getCommand(args[0]);
+
         if (args == null) {
-            System.out.println("Command not found");
+            System.out.println("Command not found.");
             return false;
         }
 
+        Command command = CommandRegistry.getCommand(args[0]);
         if (command == null) {
             LoggerUtil.logMessage(log, message, "Error retrieving command from the list.");
             return false;

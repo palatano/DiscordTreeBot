@@ -25,9 +25,6 @@ public class MemberData {
         return content;
     }
 
-    public String getUserName() {
-        return userName;
-    }
 
     public String getNickName() {
         return nickName;

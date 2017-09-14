@@ -94,7 +94,6 @@ public class PlaylistCommand implements MusicCommand {
         if (args.length < 1 || args.length > 2) {
             LoggerUtil.logMessage(logger, message, commandWithToken +
                     ", " + commandWithToken + " off, or " + commandWithToken + " on is only allowed.");
-            //MessageUtil.sendError("Not a valid response. ``&list on`` OR ``&list off`` is allowed.", msgChan);
             message.addReaction("\u274E").queue();
             return;
         }
@@ -108,7 +107,6 @@ public class PlaylistCommand implements MusicCommand {
             } else {
                 LoggerUtil.logMessage(logger, message, "Not a valid response. " + commandWithToken + " on" +
                         " OR " + commandWithToken + " off is allowed.");
-                //MessageUtil.sendError("Not a valid response. ``&list on`` OR ``&list off`` is allowed.", msgChan);
                 message.addReaction("\u274E").queue();
             }
         } else {

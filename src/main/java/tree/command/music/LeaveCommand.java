@@ -28,7 +28,9 @@ public class LeaveCommand implements MusicCommand {
     private void leave(Guild guild, MessageChannel msgChan, Message message, Member member) {
         GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter.getGuildAudioPlayer(guild);
         musicManager.player.setPaused(true);
-        guild.getAudioManager().closeAudioConnection();
+        if (guild.getAudioManager().isConnected()) {
+            guild.getAudioManager().closeAudioConnection();
+        }
     }
 
     @Override

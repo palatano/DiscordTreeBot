@@ -101,7 +101,6 @@ public class AddCommand implements MusicCommand {
                 userInfoMap.remove(userId);
                 System.out.println("Error, this should not happen.");
                 return false;
-//                throw new IllegalStateException("Error, this should not happen.");
             }
             return true;
         }
@@ -159,14 +158,15 @@ public class AddCommand implements MusicCommand {
             guildToUserMap.put(guild, new HashMap<>());
         }
 
-        if (!member.getVoiceState().inVoiceChannel()) {
-            MessageUtil.sendError("You must be in a voice channel.", msgChan);
-            return;
-        }
 
         VoiceChannel voiceChan = member.getVoiceState().getChannel();
         if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
+            return;
+        }
+
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
             return;
         }
 
@@ -179,37 +179,6 @@ public class AddCommand implements MusicCommand {
         // Check if the user is already made a selection.
         // Continue with the load if the song is added.
         long userId = member.getUser().getIdLong();
-//        if (MessageUtil.checkIfInt(search)) {
-//            if (!hasMenu(guild, userId)) {
-//                MessageUtil.sendError(
-//                        "You need to search for the song first.",
-//                        msgChan);
-//                return;
-//            }
-//            // Check if the user has a selection menu running.
-//            Map<Long, MenuSelectionInfo> userChannelMap = guildToUserMap.get(guild);
-//            long channelId = msgChan.getIdLong();
-//            if (userChannelMap.containsKey(userId)) {
-//                MenuSelectionInfo msInfo = userChannelMap.get(userId);
-//                if (msInfo.getChannel().getIdLong() != channelId) {
-//                    MessageUtil.sendError("You must select in the same channel" +
-//                            " where the menu is posted.", msgChan);
-//                    return;
-//                }
-//                int index = Integer.parseInt(search);
-//                String url = ytUtil.getSongURL(index, msgChan, (List<String>) msInfo.getSongsToChoose());
-//                if (url == null) {
-//                    return;
-//                }
-//                ytUtil.addSong(guild, msgChan, commandName, member, url);
-//                reset(guild, member.getUser().getIdLong());
-//            } else {
-//                MessageUtil.sendError(
-//                        "You need to search for the song first.",
-//                        msgChan);
-//                return;
-//            }
-//        } else {
 
             if (hasMenu(guild, userId)) {
                 reset(guild, userId);

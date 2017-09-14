@@ -19,8 +19,8 @@ public class AnalysisCommandFactory extends AbstractCommandFactory {
                 return new InfoCommand("info");
             case "uniqueusers":
                 return new UniqueUserCommand("uniqueusers");
-            case "search":
-                return new GoogleSearchCommand("search");
+            case "google":
+                return new GoogleSearchCommand("google");
             case "ping":
                 return new PingCommand("ping");
             case "youtube":

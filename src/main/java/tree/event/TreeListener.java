@@ -6,6 +6,8 @@ import net.dv8tion.jda.core.events.message.GenericMessageEvent;
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
 import org.apache.commons.math3.analysis.function.Add;
 import tree.Config;
+import tree.command.analysis.GoogleSearchCommand;
+import tree.command.analysis.YoutubeCommand;
 import tree.command.data.ReactionMenu;
 import tree.command.music.AddCommand;
 import tree.command.music.RequestCommand;
@@ -25,7 +27,28 @@ public class TreeListener extends ListenerAdapter {
     private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L, 337641574249005065L};
     private static final long[] TREES_CHANNELS = {249791455592316930L, 269577202016845824L, 346493255896268802L};
 
-    private void forwardOptionFromMenu(Guild guild, MessageChannel msgChan,
+    private void searchOptionFromMenu(Guild guild, MessageChannel msgChan,
+                                      Member member, long menuId,
+                                      ReactionMenu reactionMenu, int index) {
+
+        String commandName = reactionMenu.getCommandName();
+
+        if (commandName.equals("youtube")) {
+            YoutubeCommand youtubeCommand = (YoutubeCommand) CommandRegistry.getCommand(commandName);
+
+            if (youtubeCommand.isSelectingUser(guild, member)) {
+                youtubeCommand.nextOption(guild, msgChan, member, menuId);
+            }
+        } else if (commandName.equals("google")) {
+            GoogleSearchCommand googleSearchCommand = (GoogleSearchCommand) CommandRegistry.getCommand(commandName);
+
+            if (googleSearchCommand.isSelectingUser(guild, member)) {
+                googleSearchCommand.nextOptionSelected(guild, msgChan, member);
+            }
+        }
+    }
+
+    private void musicOptionFromMenu(Guild guild, MessageChannel msgChan,
                                        Member member, long menuId,
                                        ReactionMenu reactionMenu, int index) {
         String commandName = reactionMenu.getCommandName();
@@ -40,13 +63,17 @@ public class TreeListener extends ListenerAdapter {
             RequestCommand requestCommand = (RequestCommand) CommandRegistry.getCommand(commandName);
             YoutubeMusicUtil ytUtil = YoutubeMusicUtil.getInstance();
 
-
             if (!ytUtil.authorizedUser(guild, member)) {
                 return;
             }
+
             long userId = reactionMenu.getUserId();
             Member memb = guild.getMemberById(userId);
-            requestCommand.optionConfirmed(guild, msgChan, memb, index, menuId);
+            if (index == -2) {
+                requestCommand.onConfirmation(guild, msgChan, member);
+            } else {
+                requestCommand.optionConfirmed(guild, msgChan, memb, index, menuId);
+            }
         }
 
     }
@@ -81,7 +108,7 @@ public class TreeListener extends ListenerAdapter {
                 return;
             }
             ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
-            forwardOptionFromMenu(guild, msgChan, member,
+            musicOptionFromMenu(guild, msgChan, member,
                     menuId, reactionMenu, 1);
 
         } else if (reaction.getName().equals("\u0032\u20E3")) {
@@ -90,7 +117,7 @@ public class TreeListener extends ListenerAdapter {
                 return;
             }
             ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
-            forwardOptionFromMenu(guild, msgChan, member,
+            musicOptionFromMenu(guild, msgChan, member,
                     menuId, reactionMenu, 2);
 
         } else if (reaction.getName().equals("\u0033\u20E3")) {
@@ -99,9 +126,34 @@ public class TreeListener extends ListenerAdapter {
                 return;
             }
             ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
-            forwardOptionFromMenu(guild, msgChan, member,
+            musicOptionFromMenu(guild, msgChan, member,
                     menuId, reactionMenu, 3);
 
+        } else if (reaction.getName().equals("\u23F9")) {
+            // If the user is not in the map, return.
+//            if (!reactionMenuMap.containsKey(menuId)) {
+//                return;
+//            }
+//            ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
+//            searchOptionFromMenu(guild, msgChan, member,
+//                    menuId, reactionMenu, -1);
+
+        } else if (reaction.getName().equals("⏭")) {
+            // If the user is not in the map, return.
+            if (!reactionMenuMap.containsKey(menuId)) {
+                return;
+            }
+            ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
+            searchOptionFromMenu(guild, msgChan, member,
+                    menuId, reactionMenu, -1);
+        }
+
+        else if (reaction.getName().equals("\u2611")) {
+            if (!reactionMenuMap.containsKey(menuId)) {
+                return;
+            }
+            ReactionMenu reactionMenu = reactionMenuMap.get(menuId);
+            musicOptionFromMenu(guild, msgChan, member, menuId, reactionMenu, -2);
         }
 
     }

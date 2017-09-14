@@ -17,12 +17,10 @@ import java.util.List;
  */
 public class PauseCommand implements MusicCommand {
     private String commandName;
-    private AudioPlayerAdapter audioPlayer;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
 
     public PauseCommand(String commandName) {
         this.commandName = commandName;
-        audioPlayer = AudioPlayerAdapter.audioPlayerAdapter;
     }
 
     private void stop(Guild guild, MessageChannel msgChan, Message message, Member member) {
@@ -30,7 +28,7 @@ public class PauseCommand implements MusicCommand {
                 .getGuildAudioPlayer(guild);
         msgChan.sendMessage("Song has now been paused. Type ``" +
                 CommandManager.botToken +
-                getCommandName() +
+                "unpause" +
                 "`` to continue.").queue();
         musicManager.player.setPaused(true);
     }

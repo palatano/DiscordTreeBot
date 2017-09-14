@@ -4,6 +4,7 @@ import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.AudioManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tree.command.util.api.YoutubeMusicUtil;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 import tree.commandutil.CommandManager;
@@ -34,6 +35,13 @@ public class SkipCommand implements MusicCommand {
         if (args.length != 1) {
             LoggerUtil.logMessage(logger, message, "Only one argument allowed.");
         }
+
+        YoutubeMusicUtil ytUtil = YoutubeMusicUtil.getInstance();
+        if (!ytUtil.authorizedUser(guild, member)) {
+            message.addReaction("\u274E").queue();
+            return;
+        }
+
         skipSong(guild, msgChan, message, member);
     }
 
