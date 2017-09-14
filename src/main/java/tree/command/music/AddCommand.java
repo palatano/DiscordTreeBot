@@ -159,17 +159,16 @@ public class AddCommand implements MusicCommand {
         }
 
 
-        if (!member.getVoiceState().inVoiceChannel()) {
-            MessageUtil.sendError("You must be in a voice channel.", msgChan);
-            return;
-        }
-
         VoiceChannel voiceChan = member.getVoiceState().getChannel();
         if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
             return;
         }
 
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
+        }
 
         String search = ytUtil.getQuery(args);
         if (!ytUtil.authorizedUser(guild, member)) {
@@ -188,7 +187,7 @@ public class AddCommand implements MusicCommand {
 
             ScheduledFuture<?> newTask = ytUtil.getMenuUtil()
                     .createMenuTask(createRunnable(guild, msgChan, member),
-                            null, 45);
+                            null, 20);
 
             // Allow the user to keep searching for a song
             // until a number command is made.
