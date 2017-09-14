@@ -210,7 +210,7 @@ public class YoutubeMusicUtil {
         String videoTitle = singleVideo.getSnippet().getTitle();
         String desc = singleVideo.getSnippet().getDescription();
 
-        String beginning = atomInt.addAndGet(1) + ") " + "``" + videoTitle + "`` ";
+        String beginning = atomInt.addAndGet(1) + ") " + "**" + videoTitle + "** ";
         String channel = "from channel ``" + author + "``";
         result += beginning + channel ;
         String url = "https://www.youtube.com/watch?v=" + rId.getVideoId();

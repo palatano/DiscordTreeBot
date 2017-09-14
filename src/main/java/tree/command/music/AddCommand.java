@@ -158,15 +158,14 @@ public class AddCommand implements MusicCommand {
             guildToUserMap.put(guild, new HashMap<>());
         }
 
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
+        }
 
         VoiceChannel voiceChan = member.getVoiceState().getChannel();
         if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
-            return;
-        }
-
-        if (!member.getVoiceState().inVoiceChannel()) {
-            MessageUtil.sendError("You must be in a voice channel.", msgChan);
             return;
         }
 

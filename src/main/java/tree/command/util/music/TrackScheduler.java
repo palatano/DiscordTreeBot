@@ -115,13 +115,13 @@ public class TrackScheduler extends AudioEventAdapter {
         }
         Member currMember = personAddedMap.get(player.getPlayingTrack());
         AudioTrackInfo currentSongInfo = player.getPlayingTrack().getInfo();
-        list = "``Now Playing:`` " + currentSongInfo.title + " " + getSongDuration(currentSongInfo.length) +
+        list = "``Now Playing:`` **" + currentSongInfo.title + "** " + getSongDuration(currentSongInfo.length) +
                 ", added by ``" + currMember.getEffectiveName() + "``\n\n";
 
         for (AudioTrack track : queue) {
             AudioTrackInfo info = track.getInfo();
             Member member = personAddedMap.get(track);
-            list += "``Song " + ++counter + ")`` " + info.title + " " +
+            list += "``Song " + ++counter + ")`` **" + info.title + "** " +
                     getSongDuration(info.length) + " - added by ``" + member.getEffectiveName() + "``\n";
             if (counter == MAX_SONGS_LISTED) {
                 break;
@@ -140,13 +140,13 @@ public class TrackScheduler extends AudioEventAdapter {
         }
         Member currMember = personAddedMap.get(player.getPlayingTrack());
         AudioTrackInfo currentSongInfo = player.getPlayingTrack().getInfo();
-        list += "``Now Playing:`` " + currentSongInfo.title + " " + getSongDuration(currentSongInfo.length) +
+        list += "``Now Playing:`` **" + currentSongInfo.title + "** " + getSongDuration(currentSongInfo.length) +
                 ", added by ``" + currMember.getEffectiveName() + "``\n\n";
         if (!queue.isEmpty()) {
             AudioTrack nextTrack = queue.peek();
             Member nextMember = personAddedMap.get(nextTrack);
             AudioTrackInfo nextTrackInfo = nextTrack.getInfo();
-            list += "``Next Song``: " + nextTrackInfo.title + " " + getSongDuration(nextTrackInfo.length) +
+            list += "``Next Song``: **" + nextTrackInfo.title + "** " + getSongDuration(nextTrackInfo.length) +
                     ", added by ``" + nextMember.getEffectiveName() + "``\n";
         }
         return list;

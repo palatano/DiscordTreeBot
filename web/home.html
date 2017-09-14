@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>this</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+
+  <link rel='stylesheet prefetch' href='http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css'>
+<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/bulma/0.4.2/css/bulma.min.css'>
+<link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>
+
+  
+  
+</head>
+
+<body>
+  
+
+<head>
+  <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+  <link rel="stylesheet" href="https://dl.dropboxusercontent.com/s/e30j6tvcdfle1ue/treebot.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js">
+  <link href="https://fonts.googleapis.com/css?family=Droid+Serif" rel="stylesheet">
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://tympanus.net/Development/DialogEffects/js/modernizr.custom.js"></script>
+  <script type="text/javascript" src="https://tympanus.net/Development/DialogEffects/js/classie.js"></script>
+  <script type="text/javascript" src="https://dl.dropboxusercontent.com/s/ncg9p4il6rxw4n5/treebot.js"></script>
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    var trackerCreated = false;
+
+  function createTracker(opt_clientId) {
+    if (!trackerCreated) {
+      var fields = {};
+      if (opt_clientId) {
+        fields.clientId = opt_clientId;
+      }
+
+      ga('create', 'UA-XXXXXXXX-Y', 'auto', fields);
+      // Google’s sample doesn’t do anything with the tracker
+      // once created, but presumably you will want to send either a 
+      // GA pageview or event, like I have here.
+	ga('send', 'pageview');
+
+      trackerCreated = true;
+    }
+  }
+
+  window.addEventListener('message', function(event) {
+    if (event.origin != 'http://www.xyz.com') return;
+    createTracker(event.data);
+  });
+
+  // I increased the timeout to 5 seconds to give the message more
+  // time to arrive.
+  setTimeout(createTracker, 5000);
+
+</script>
+</head>
+<body>
+    <div class="container-fluid" id="top">
+      <div class="img-circular bounce"></div>
+      
+      <div id="title-sentence">
+        Welcome to TreeBot!
+      </div>
+    
+      <div class="tile is-ancestor" id="button-grid">
+        <div class="tile">
+          <a href="http://discord.gg/5pTVpcM" class="button is-danger button-text" target="_blank" id="left-button"> 
+            Support Server
+          </a>
+          <a href="https://discordapp.com/oauth2/authorize?client_id=337627312830939136&scope=bot&permissions=0" target="_blank" class="button is-primary button-text" id="center-button">
+            Bot Invite
+          </a>
+          <a href="https://enigmatic-refuge-19445.herokuapp.com/" target="_blank" class="button is-success button-text" id="right-button">
+            Website
+          </a>
+        </div>
+      </div>
+    </div>
+        
+    <div class="container-fluid section-head" style="margin-bottom:-41px;">
+      <i class="material-icons md-48">computer</i>
+      <p class="section-text">
+        Commands
+      </p>
+    </div>
+  
+  
+    <div id="grid" class="container-fluid" style="padding-bottom: -25px;">
+      <div class="page-header"></div>
+      <div class="row grid-divider">
+        <div class="col-sm-4">
+        <div class="col-padding">
+          <h3>Music Commands</h3>
+          <p class="sub-section-text">
+            Playing music is as easy as joining voice and typing:</br></p>
+            <p class="sub-section-text"><center><span style="font-size: 16px ; color: #000000; font-style: italic;">;add [song]</span></center></br></p>
+            <p class="sub-section-text">For more information, click on the button below.
+          </p>
+          <div class="button-wrap">
+            <button id="music-commands-button" data-dialog="somedialog" class="trigger button is-primary">
+              <p class="commands-button-text">Music Commands</p>
+            </button>    
+          </div>
+        </div>
+      </div>
+      <div  class="col-sm-4">
+        <div class="col-padding">
+          <h3>Analysis Commands</h3>
+          <p class="sub-section-text">
+            Use an assortment of analysis utilities, such as searching on YouTube and Google.</br></p>
+            
+            <center><span style="font-size: 16px ; color: #000000; font-style: italic; ">;search [query]</span></center>
+            <center><span style="font-size: 16px ; color: #000000; font-style: italic;">;youtube [query]</span></center></br>
+            <p class="sub-section-text">For more information, click on the button below.
+          </p>
+          <div class="button-wrap">
+            <button id="analysis-commands-button" data-dialog2="somedialog2" class="trigger button is-success">
+              <p class="commands-button-text">Analysis Commands</p>
+            </button>    
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="col-padding">
+          <h3>Miscellaneous Commands</h3>
+          <p class="sub-section-text">
+            Use various commands for entertainment or information.</br>
+            <center><span style="font-size: 16px ; color: #000000; font-style: italic;">;bot</span></center></br>
+
+            <p class="sub-section-text">For more information, click on the button below.
+          </p>
+          
+          </p>
+          
+          <div class="button-wrap">
+            <button id="misc-commands-button" data-dialog3="somedialog3" class="trigger button is-success">
+              <p class="commands-button-text">Miscellaneous Commands</p>
+            </button>    
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+  
+  <div id="somedialog" class="dialog dialog--close">
+					<div class="dialog__overlay"></div>
+					<div class="dialog__content">
+						<div class="morph-shape">
+							<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 560 280" preserveAspectRatio="none">
+								<rect x="3" y="3" fill="none" width="556" height="276"></rect>
+							</svg>
+						</div>
+						<div class="dialog-inner">
+							<h2 style="font-size: 1.0em;">
+                <strong>Basic commands:</strong> </br>
+                ◉ ;add [song] - Adds the song with either a keyword search or a direct URL. </br>
+                ◉ ;skip - Skip the current song. </br>
+                ◉ ;req [song] - Allow a non-authorized user to request a song and an authorized user to add it. </br>
+                ◉ ;np - Displays the current song that is playing. </br> 
+                </br>
+
+                <strong>Advanced commands:</strong></br>
+                ◉ ;pause - Pause the song.</br>
+                ◉ ;list - Returns the current song list. Turn on/off automatic playlist posting with ;list [on|off]</br>
+                ◉ ;unpause - Unpause the player.</br>
+                ◉ ;leave - Leave the music channel.</br>
+                ◉ ;join - Join the music channel.</br>
+                ◉ ;musichelp - Music command list.</br>
+                ◉ ;cnl - Cancels the current menu, if open.</br>
+                ◉ ;undo - Undo the last song added.</br>
+              </h2>
+							<div><button class="action" data-dialog-close="a">Close</button></div>
+						</div>
+					</div>
+				</div> 
+  
+    <div id="somedialog2" class="dialog dialog--close">
+					<div class="dialog__overlay"></div>
+					<div class="dialog__content">
+						<div class="morph-shape">
+							<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 560 280" preserveAspectRatio="none">
+								<rect x="3" y="3" fill="none" width="556" height="276"></rect>
+							</svg>
+						</div>
+						<div class="dialog-inner">
+              <strong>Basic commands:</strong> </br>
+							◉;info [name]: Returns your join date to the server. If you have left/been kicked
+                the join date will be the day you rejoined.</br>
+              ◉;uniqueusers [date]: Gives an excel file with the unique user name, time stamp, and message. </br>
+              ◉;search [search]: Returns the first three search results from a google search query.</br>
+              ◉;ping: Returns the latency of the bot.</br>
+              ◉;youtube [search]: Returns the first three search results from Youtube.</br> </br>
+
+							<div><button class="action" data-dialog-close="a">Close</button></div>
+						</div>
+					</div>
+				</div> 
+
+    <div id="somedialog3" class="dialog dialog--close">
+					<div class="dialog__overlay"></div>
+					<div class="dialog__content">
+						<div class="morph-shape">
+							<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 560 280" preserveAspectRatio="none">
+								<rect x="3" y="3" fill="none" width="556" height="276"></rect>
+							</svg>
+						</div>
+						<div class="dialog-inner">
+              <strong>Miscellaneous Commands</strong> </br>
+                ◉;test: Tests if the bot is online with a :joy: emoji.</br>
+                ◉;help: Help menu.</br>
+                ◉;bot: Gives the bot information.</br>
+							<div><button class="action" data-dialog-close="a">Close</button></div>
+						</div>
+					</div>
+				</div> 
+  
+  </body>
+  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+<script src='https://tympanus.net/Development/DialogEffects/js/modernizr.custom.js'></script>
+<script src='https://tympanus.net/Development/DialogEffects/js/classie.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>
+
+  
+</body>
+</html>
