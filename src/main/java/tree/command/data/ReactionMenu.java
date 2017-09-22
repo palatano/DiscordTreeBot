@@ -10,6 +10,7 @@ public class ReactionMenu {
     private String commandName;
     private long userId;
     private MessageChannel msgChan;
+    boolean isClicked;
 
     public String getCommandName() {
         return commandName;
@@ -40,6 +41,10 @@ public class ReactionMenu {
         this.commandName = commandName;
         this.userId = userId;
         this.msgChan = msgChan;
+    }
+
+    public void clicked() {
+        isClicked = true;
     }
 
 }

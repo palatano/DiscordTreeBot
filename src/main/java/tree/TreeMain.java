@@ -4,7 +4,6 @@ import net.dv8tion.jda.core.utils.SimpleLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.commandutil.CommandManager;
-import tree.db.JDBCInit;
 import tree.event.TreeListener;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -21,6 +20,7 @@ public abstract class TreeMain extends ListenerAdapter {
     private static Logger log = LoggerFactory.getLogger(TreeMain.class);
 
     public static void main(String[] args) {
+        SimpleLog.LEVEL = SimpleLog.Level.INFO;
         log.info(">>>>>>>> TreeMain Start <<<<<<<<");
         Config.setUpConfig(args);
         log.info("Configuration is complete.");

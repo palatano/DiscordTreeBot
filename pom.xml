@@ -8,31 +8,65 @@
     <artifactId>Discord-DAU</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+
+
     <build>
         <plugins>
+            <!--<plugin>-->
+                <!--<groupId>org.codehaus.mojo</groupId>-->
+                <!--<artifactId>properties-maven-plugin</artifactId>-->
+                <!--<version>1.0-alpha-1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>initialize</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>read-project-properties</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<files>-->
+                                <!--<file>C:/Users/Valued Customer/Documents/GitHub/db.properties</file>-->
+                            <!--</files>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                        <!--<id>initialize-config</id>-->
+                        <!--<phase>initialize</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>read-project-properties</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<files>-->
+                                <!--<file>C:/Users/Valued Customer/Documents/GitHub/db.properties</file>-->
+                            <!--</files>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
+
+
             <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
-            <version>3.0.0</version>
-            <executions>
-            <execution>
-            <phase>package</phase>
-            <goals>
-            <goal>shade</goal>
-            </goals>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
 
 
-            <configuration>
-                <transformers>
-                    <!-- add Main-Class to manifest file -->
-                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                        <mainClass>tree.TreeMain</mainClass>
-                    </transformer>
-                </transformers>
-                <!--<artifactSet>-->
-            </configuration>
-            </execution>
-            </executions>
+                        <configuration>
+                            <transformers>
+                                <!-- add Main-Class to manifest file -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>tree.TreeMain</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!--<artifactSet>-->
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -52,7 +86,20 @@
 
 
 
+    <!--<properties>-->
+        <!--&lt;!&ndash; INSTANCE_CONNECTION_NAME from Cloud Console > SQL > Instance Details > Properties-->
+             <!--or gcloud sql instances describe <instance>-->
+             <!--project:region:instance for Cloud SQL 2nd Generation or-->
+             <!--project:instance        for Cloud SQL 1st Generation-->
+        <!--&ndash;&gt;-->
+        <!--<INSTANCE_CONNECTION_NAME>treebot-175716:us-central1:treebot-1650045</INSTANCE_CONNECTION_NAME>-->
+        <!--<user>${user}</user>-->
+        <!--<password>${password}</password>-->
+        <!--<database>guild</database>-->
 
+        <!--<maven.compiler.target>1.8</maven.compiler.target>-->
+        <!--<maven.compiler.source>1.8</maven.compiler.source>-->
+    <!--</properties>-->
 
 
     <dependencies>
@@ -155,7 +202,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>3.3.0_265</version>
+            <version>3.3.0_275</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
@@ -199,6 +246,19 @@
             <artifactId>sphinx4-data</artifactId>
             <version>5prealpha-SNAPSHOT</version>
         </dependency>
+
+        <!-- Driver injected at runtime by the use of <use-google-connector-j> in appengine-web.xml -->
+        <dependency> <!-- Only used locally -->
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.44</version>  <!-- v5.x.x is for production, v6.x.x EAP X DevAPI -->
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>mysql-socket-factory</artifactId> <!-- mysql-socket-factory-connector-j-6 if using 6.x.x -->
+            <version>1.0.3</version>
+        </dependency>
+
     </dependencies>
 
     <repositories>

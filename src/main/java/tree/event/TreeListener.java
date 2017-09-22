@@ -37,12 +37,14 @@ public class TreeListener extends ListenerAdapter {
             YoutubeCommand youtubeCommand = (YoutubeCommand) CommandRegistry.getCommand(commandName);
 
             if (youtubeCommand.isSelectingUser(guild, member)) {
+                reactionMenu.clicked();
                 youtubeCommand.nextOption(guild, msgChan, member, menuId);
             }
         } else if (commandName.equals("google")) {
             GoogleSearchCommand googleSearchCommand = (GoogleSearchCommand) CommandRegistry.getCommand(commandName);
 
             if (googleSearchCommand.isSelectingUser(guild, member)) {
+                reactionMenu.clicked();
                 googleSearchCommand.nextOptionSelected(guild, msgChan, member);
             }
         }
@@ -70,8 +72,10 @@ public class TreeListener extends ListenerAdapter {
             long userId = reactionMenu.getUserId();
             Member memb = guild.getMemberById(userId);
             if (index == -2) {
+                reactionMenu.clicked();
                 requestCommand.onConfirmation(guild, msgChan, member);
             } else {
+                reactionMenu.clicked();
                 requestCommand.optionConfirmed(guild, msgChan, memb, index, menuId);
             }
         }

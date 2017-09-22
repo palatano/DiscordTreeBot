@@ -1,6 +1,7 @@
 package tree.commandutil.type;
 
 import tree.command.text.BotInfoCommand;
+import tree.command.text.BroadcastCommand;
 import tree.command.text.HelpCommand;
 import tree.command.text.TestCommand;
 import tree.command.voice.VoiceSearchCommand;
@@ -29,6 +30,8 @@ public class TextCommandFactory extends AbstractCommandFactory {
                 return new HelpCommand("help");
             case "bot":
                 return new BotInfoCommand("bot");
+            case "broadcast":
+                return new BroadcastCommand("broadcast");
             default:
                 return null;
         }

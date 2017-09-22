@@ -4,6 +4,7 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.*;
 import tree.Config;
+import tree.command.util.DataUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.TextCommand;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Valued Customer on 9/6/2017.
  */
 public class BotInfoCommand implements TextCommand {
+    private DataUtil dataUtil = new DataUtil();
     private String commandName;
     private static final String botURL = "https://bots.discord.pw/bots/337627312830939136";
     private static final String serverInviteLink = "https://discord.gg/5pTVpcM";
@@ -37,8 +39,10 @@ public class BotInfoCommand implements TextCommand {
         int numUsers = jda.getUsers().size();
         int numMusicUsers = 0;
         int numConnectedUsers = 0;
-        String musicUsers = "Music Users: ";
+
+        String output = "";
         for (Guild g : guildList) {
+            String musicUsers = "Music Users: ";
             List<VoiceChannel> voiceChannelList = g.getVoiceChannels();
             VoiceChannel currentBotVoiceChannel = g.getAudioManager().getConnectedChannel();
 
@@ -64,12 +68,15 @@ public class BotInfoCommand implements TextCommand {
             if (index != -1) {
                 musicUsers = new StringBuilder(musicUsers).replace(index, index + 2, "").toString();
             }
-            System.out.println("----- " + g.getName() + " -----");
-            System.out.println("Size of server: " + g.getMembers().size());
-            System.out.println("Server Owner: " + g.getOwner().getEffectiveName());
-            System.out.println("Server Creation Date: " + g.getOwner().getJoinDate());
-            System.out.println(musicUsers);
+            output += "----- " + g.getName() + " -----\n";
+            output += "Size of server: " + g.getMembers().size() + "\n";
+            output += "Server Owner: " + g.getOwner().getEffectiveName() + "\n";
+            output += "Server Creation Date: " + g.getOwner().getJoinDate() + "\n";
+            output += musicUsers + "\n\n";
         }
+
+        dataUtil.writeGuildDataToFile("guildDataFile", output);
+
 
 
         long millis = System.currentTimeMillis() - Config.startTime;

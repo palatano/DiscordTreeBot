@@ -166,6 +166,17 @@ public class DataUtil {
         msgChan.sendFile(fileDiscord, fileDiscord.getName(), message).queue();
     }
 
+    public void writeGuildDataToFile(String fileName, String toWrite) {
+        String filePath = Config.getFilePath();
+        File guildDataFile = new File(filePath + fileName + ".txt");
+        try {
+            FileUtils.writeStringToFile(guildDataFile, toWrite, "UTF-8");
+        } catch (IOException e) {
+            System.out.println("Cannot write to file");
+            e.printStackTrace();
+        }
+    }
+
 
 
 }

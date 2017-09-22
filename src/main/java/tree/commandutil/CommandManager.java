@@ -23,7 +23,7 @@ import java.util.TimerTask;
  */
 public class CommandManager {
     public static final String[] adminCommands = {"uniqueusers"};
-    public static final String[] ownerCommands = {"shutdown"};
+    public static final String[] ownerCommands = {"shutdown", "broadcast"};
     public static final Map<Guild, Map<Long, ReactionMenu>> reactionMenuMap = new HashMap<>();
     private static Logger log = LoggerFactory.getLogger(CommandManager.class);
     public static final String botToken = ";";
@@ -80,7 +80,9 @@ public class CommandManager {
         }
 
         command.execute(message.getGuild(), message.getChannel(), message, message.getMember(), args);
-        LoggerUtil.logMessage(log, message, command.getCommandName() + " executed.");
+        LoggerUtil.logMessage(log, message,
+                command.getCommandName() +
+                        " executed with argument: {" + msgText + "}");
         return true;
     }
 

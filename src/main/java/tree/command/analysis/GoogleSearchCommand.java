@@ -240,17 +240,6 @@ public class GoogleSearchCommand implements AnalysisCommand {
 
             List<Element> elementsList = new ArrayList<>();
             for (Element link : links) {
-
-
-                Elements titles = link.select("h3[class=r]");
-                String title = titles.text();
-
-                Elements bodies = link.select("span[class=st]");
-                String body = bodies.text();
-
-                System.out.println("Title: "+title);
-                System.out.println("Body: "+body+"\n");
-
                 elementsList.add(link);
             }
 

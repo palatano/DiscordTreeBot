@@ -7,7 +7,7 @@ import net.dv8tion.jda.core.entities.Role;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
-import tree.db.JDBCInit;
+import tree.db.DatabaseInit;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -29,6 +29,10 @@ public class Config {
     private static String youtubeAPIKey;
     private static boolean isTesting = false;
     private static String guildDataFilepath;
+    private static String dbUser;
+    private static String dbPassword;
+
+
     public static Map<Long, String> guildFilePaths;
     public static Map<Long, Set<Long>> guildAllowedTextChannels;
     public static Map<Long, Set<Long>> guildAllowedVoiceChannels;
@@ -440,8 +444,9 @@ public class Config {
             String credsFileString = FileUtils.readFileToString(credsFile);
             Map<String, Object> creds = (Map<String, Object>) yaml.load(credsFileString);
             botToken = (String) creds.get("token");
-
             filePath = (String) creds.get("filePath");
+            dbUser = (String) creds.get("dbUser");
+            dbPassword = (String) creds.get("dbPassword");
 
             osName = System.getProperty("os.name", "generic")
                     .toLowerCase(Locale.ENGLISH);
@@ -520,4 +525,11 @@ public class Config {
         return youtubeAPIKey;
     }
 
+    public static String getDbUser() {
+        return dbUser;
+    }
+
+    public static String getDbPassword() {
+        return dbPassword;
+    }
 }

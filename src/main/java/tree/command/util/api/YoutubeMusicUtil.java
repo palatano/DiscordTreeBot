@@ -102,13 +102,13 @@ public class YoutubeMusicUtil {
 
             // Create an iterator for the results, and then merge into a list.
             Iterator<SearchResult> iteratorSearchResults = resultList.iterator();
-            String messageString = "";
+            String messageString = "--- ";
             if (commandName.equals("add")) {
                 messageString += "**" + member.getEffectiveName();
             } else if (commandName.equals("req")) {
                 messageString += "**Authorized Users";
             }
-            messageString += "**: Choose your song:\n\n";
+            messageString += "**: Choose your song. ---\n\n";
 
             while (iteratorSearchResults.hasNext()) {
                 SearchResult singleVideo = iteratorSearchResults.next();
@@ -120,6 +120,8 @@ public class YoutubeMusicUtil {
                     messageString += getMessageString(singleVideo, rId, atomInt, songsToChoose) + "\n";
                 }
             }
+
+            messageString += "\nClick a reaction to choose, or cancel with :x:.";
             menuWrapper.setMessage(msgChan.sendMessage(messageString).complete());
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "

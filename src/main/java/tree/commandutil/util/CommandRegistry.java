@@ -13,7 +13,7 @@ import java.util.Set;
 public class CommandRegistry {
     private static Map<String, Command> commandList;
     private static CommandRegistry commandRegistry;
-    public static final String[] textCommands = {"test", "help", "bot"};
+    public static final String[] textCommands = {"test", "help", "bot", "broadcast"};
     public static final String[] pictureCommands = {"nugget"};
     public static final String[] analysisCommands = {"info", "uniqueusers", "google",
             "ping", "youtube", "set", "unset", "guildpermissions"};

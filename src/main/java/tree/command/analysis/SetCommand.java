@@ -1,19 +1,22 @@
 package tree.command.analysis;
 
-import com.google.cloud.language.v1.PartOfSpeech;
-import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import tree.Config;
+import tree.command.data.permsdata.GuildPerm;
 import tree.command.data.MenuSelectionInfo;
+import tree.command.data.permsdata.SetPermissionsVisitor;
+import tree.command.data.permsdata.MemberPerm;
+import tree.command.data.permsdata.MusicRolePerm;
+import tree.command.data.permsdata.TextChannelPerm;
+import tree.command.data.permsdata.VoiceChannelPerm;
 import tree.command.util.MessageUtil;
 import tree.command.util.api.YoutubeMusicUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
+import tree.db.DatabaseManager;
 
-import javax.xml.soap.Text;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -21,13 +24,16 @@ import java.util.concurrent.ScheduledFuture;
  */
 public class SetCommand implements AnalysisCommand {
     private String commandName;
+    private DatabaseManager db;
     private Map<Guild, Map<Long, MenuSelectionInfo>> guildToUserMap;
-    private Map<Guild, Map<Long, Config.SetType>> guildSetTypeMap;
+    private Map<Guild, Map<Long, GuildPerm>> guildPermMap;
+    private SetPermissionsVisitor visitor = new SetPermissionsVisitor();
 
     public SetCommand(String commandName) {
         this.commandName = commandName;
         guildToUserMap = new HashMap<>();
-        guildSetTypeMap = new HashMap<>();
+        guildPermMap = new HashMap<>();
+        db = DatabaseManager.getInstance();
     }
 
     private Runnable createRunnable(Guild guild, MessageChannel msgChan, Member member) {
@@ -36,41 +42,35 @@ public class SetCommand implements AnalysisCommand {
         };
     }
 
-    private void addSelectionEntry(Guild guild, long userId,
-                                   MenuSelectionInfo msInfo, Config.SetType type) {
+    private void checkIfGuildExists(Guild guild) {
         if (!guildToUserMap.containsKey(guild)) {
             guildToUserMap.put(guild, new HashMap<>());
         }
 
-        if (!guildSetTypeMap.containsKey(guild)) {
-            guildSetTypeMap.put(guild, new HashMap<>());
+        if (!guildPermMap.containsKey(guild)) {
+            guildPermMap.put(guild, new HashMap<>());
         }
+    }
 
+    private void addSelectionEntry(Guild guild, long userId,
+                                   MenuSelectionInfo msInfo, GuildPerm perm) {
         Map<Long, MenuSelectionInfo> userSelectionMap =
                 guildToUserMap.get(guild);
         userSelectionMap.put(userId, msInfo);
-        guildSetTypeMap.get(guild).put(userId, type);
+        guildPermMap.get(guild).put(userId, perm);
     }
 
     private void deleteSelectionEntry(Guild guild, long userId) {
-        if (!guildToUserMap.containsKey(guild) || !guildSetTypeMap.containsKey(guild)) {
-                System.out.println("Bot is attempting to remove a user and its selection from" +
-                        " a non-existent guild.");
-                return;
-            }
-            Map<Long, MenuSelectionInfo> userSelectionMap = guildToUserMap.get(guild);
-            if (!userSelectionMap.containsKey(userId)) {
-                System.out.println("Bot is attempting to remove a non-existent user.");
-                return;
-            }
-            MenuSelectionInfo msInfo = userSelectionMap.get(userId);
-            ScheduledFuture<?> task = msInfo.getTask();
-            long menuId = msInfo.getMenu().getIdLong();
-            MessageChannel msgChan = msInfo.getChannel();
-            if (menuId != 0) {
-                msgChan.deleteMessageById(menuId).queue();
-            }
-            userSelectionMap.remove(userId);
+        Map<Long, MenuSelectionInfo> userSelectionMap = guildToUserMap.get(guild);
+        MenuSelectionInfo msInfo = userSelectionMap.get(userId);
+
+        ScheduledFuture<?> task = msInfo.getTask();
+        long menuId = msInfo.getMenu().getIdLong();
+        MessageChannel msgChan = msInfo.getChannel();
+        if (menuId != 0) {
+            msgChan.deleteMessageById(menuId).queue();
+        }
+        userSelectionMap.remove(userId);
         if (!task.isCancelled() || !task.isDone()) {
             task.cancel(true);
         }
@@ -143,9 +143,37 @@ public class SetCommand implements AnalysisCommand {
         return null;
     }
 
+    private void handleMenu(Guild guild, MessageChannel msgChan,
+                            Member member, Message message, int type) throws SQLException {
+        long guildId = guild.getIdLong();
+        long userId = member.getUser().getIdLong();
+
+        Map<Long, MenuSelectionInfo> userSelectionMap =
+                guildToUserMap.get(guild);
+        Map<Long, GuildPerm> permMap = guildPermMap.get(guild);
+        if (!userSelectionMap.containsKey(userId) ||
+                permMap.containsKey(userId)) {
+            long id = getIdToSet(guild, msgChan, userId, type);
+            if (id == -1) {
+                return;
+            }
+            GuildPerm perm = permMap.get(userId);
+            perm.accept(guild, visitor, id);
+
+            ScheduledFuture<?> task = guildToUserMap.get(guild).get(userId).getTask();
+            if (!task.isCancelled() || !task.isDone()) {
+                task.cancel(true);
+            }
+            deleteSelectionEntry(guild, userId);
+            message.addReaction("\u2705").queue();
+        } else {
+            message.addReaction("\u274E").queue();
+        }
+    }
+
     private void scheduleAction(Message menu, Guild guild,
                                 MessageChannel msgChan, Member member,
-                                Config.SetType type, List<Long> list) {
+                                GuildPerm perm, List<Long> list) {
         // Send the message, store the menu, and update a variable such that
         // the user should return a response.
         YoutubeMusicUtil ytUtil = YoutubeMusicUtil.getInstance();
@@ -153,7 +181,7 @@ public class SetCommand implements AnalysisCommand {
                 null, 15);
         MenuSelectionInfo msInfo = new MenuSelectionInfo(menu, msgChan,
                 list, task);
-        addSelectionEntry(guild, member.getUser().getIdLong(), msInfo, type);
+        addSelectionEntry(guild, member.getUser().getIdLong(), msInfo, perm);
     }
 
     private long getIdToSet(Guild guild, MessageChannel msgChan, long userId, int choice) {
@@ -169,6 +197,8 @@ public class SetCommand implements AnalysisCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
+        checkIfGuildExists(guild);
+
         // Before using the set command, check if the guild exists and the user is an admin.
         if (!Config.isAdmin(guild, member)) {
             message.addReaction("\u274E").queue();
@@ -186,27 +216,11 @@ public class SetCommand implements AnalysisCommand {
                 MessageUtil.sendError("Too many arguments.", msgChan);
                 return;
             }
-
-            Map<Long, MenuSelectionInfo> userSelectionMap =
-                    guildToUserMap.get(guild);
-            if (userSelectionMap != null && userSelectionMap.containsKey(userId)) {
-                int choice = Integer.parseInt(type);
-                long id = getIdToSet(guild, msgChan, userId, choice);
-                if (id == -1) {
-                    return;
-                }
-
-                Config.SetType typeAfterMenu = guildSetTypeMap.get(guild).get(userId);
-                Config.setGuildInfo(typeAfterMenu, guild, id);
-
-                ScheduledFuture<?> task = guildToUserMap.get(guild).get(userId).getTask();
-                if (!task.isCancelled() || !task.isDone()) {
-                    task.cancel(true);
-                }
-                deleteSelectionEntry(guild, userId);
-                message.addReaction("\u2705").queue();
-            } else {
-                message.addReaction("\u274E").queue();
+            int choice = Integer.parseInt(type);
+            try {
+                handleMenu(guild, msgChan, member, message, choice);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
             return;
         }
@@ -220,8 +234,14 @@ public class SetCommand implements AnalysisCommand {
         // If menu runs out before confirmation, delete and cancel.
         // If option is selected out of the list (MAX: 5 results), delete and cancel.
 
-        switch (type) {
-            case "text_channel":
+
+        try {
+            if (!db.checkIfKeyExists(guild, "guilds", "guild_id", guildId, true)) {
+                db.initializeGuildData(guild);
+            }
+
+            switch (type) {
+                case "text_channel":
                 List<TextChannel> textChannelList = guild.getTextChannelsByName(param, true);
 
                 // Check if there are multiple channels or not.
@@ -231,6 +251,8 @@ public class SetCommand implements AnalysisCommand {
                     return;
                 } else if (textChannelList.size() == 1) {
                     textChan = textChannelList.get(0);
+                    db.setGuildPermissions(guild, textChan);
+                    message.addReaction("\u2705").queue();
                 } else {
                     String menuString = createMenu(textChannelList);
                     Message menu = msgChan.sendMessage(menuString).complete();
@@ -239,108 +261,100 @@ public class SetCommand implements AnalysisCommand {
                     for (TextChannel textChannel : textChannelList) {
                         listOfIds.add(textChannel.getIdLong());
                     }
-
                     scheduleAction(menu, guild, msgChan,
-                            member, Config.SetType.TEXT_CHANNEL, listOfIds);
-                    return;
+                            member, new TextChannelPerm(), listOfIds);
                 }
-                Config.setGuildInfo(Config.SetType.TEXT_CHANNEL, guild, textChan.getIdLong());
-                message.addReaction("\u2705").queue();
                 break;
 
-            case "voice_channel":
-                List<VoiceChannel> voiceChannelList = guild.getVoiceChannelsByName(param, true);
+                case "voice_channel":
 
-                // Check if there are multiple channels.
-                VoiceChannel voiceChan = null;
-                if (voiceChannelList.isEmpty()) {
-                    MessageUtil.sendError("No channels found to set.", msgChan);
-                    return;
-                } else if (voiceChannelList.size() == 1) {
-                    voiceChan = voiceChannelList.get(0);
-                } else {
-                    String menuString = createMenu(voiceChannelList);
-                    Message menu = msgChan.sendMessage(menuString).complete();
-                    List<Long> listOfIds = new ArrayList<>();
+                    List<VoiceChannel> voiceChannelList = guild.getVoiceChannelsByName(param, true);
 
-                    for (VoiceChannel voiceChannel : voiceChannelList) {
-                        listOfIds.add(voiceChannel.getIdLong());
+                    // Check if there are multiple channels.
+                    VoiceChannel voiceChan = null;
+                    if (voiceChannelList.isEmpty()) {
+                        MessageUtil.sendError("No channels found to set.", msgChan);
+                        return;
+                    } else if (voiceChannelList.size() == 1) {
+                        voiceChan = voiceChannelList.get(0);
+                        db.setGuildPermissions(guild, voiceChan);
+                        message.addReaction("\u2705").queue();
+                    } else {
+                        String menuString = createMenu(voiceChannelList);
+                        Message menu = msgChan.sendMessage(menuString).complete();
+                        List<Long> listOfIds = new ArrayList<>();
+
+                        for (VoiceChannel voiceChannel : voiceChannelList) {
+                            listOfIds.add(voiceChannel.getIdLong());
+                        }
+
+                        scheduleAction(menu, guild, msgChan,
+                                member, new VoiceChannelPerm(), listOfIds);
+                    }
+                    break;
+
+                case "admin":
+                    List<Member> memberList = new ArrayList<>(createMemberMap(guild, param).values());
+
+                    // Check if there are multiple users.
+                    Member mem = null;
+                    if (memberList.isEmpty()) {
+                        MessageUtil.sendError("No admins found to set.", msgChan);
+                        return;
+                    } else if (memberList.size() == 1) {
+                        mem = memberList.get(0);
+                        db.setGuildPermissions(guild, mem);
+                        message.addReaction("\u2705").queue();
+                    } else {
+                        String menuString = createMenu(memberList);
+                        Message menu = msgChan.sendMessage(menuString).complete();
+
+                        List<Long> listOfIds = new ArrayList<>();
+                        for (Member memberForId : memberList) {
+                            listOfIds.add(memberForId.getUser().getIdLong());
+                        }
+
+                        scheduleAction(menu, guild, msgChan,
+                                member, new MemberPerm(), listOfIds);
+                    }
+                    break;
+
+                case "music_role":
+                    List<Role> roleList = guild.getRolesByName(param, true);
+
+                    // Check if there are multiple users.
+                    Role role = null;
+                    if (roleList.isEmpty()) {
+                        MessageUtil.sendError("No roles found to set.", msgChan);
+                        return;
+                    } else if (roleList.size() == 1) {
+                        role = roleList.get(0);
+                        db.setGuildPermissions(guild, role);
+                        message.addReaction("\u2705").queue();
+                    } else {
+                        String menuString = createMenu(roleList);
+                        Message menu = msgChan.sendMessage(menuString).complete();
+
+                        List<Long> listOfIds = new ArrayList<>();
+
+                        for (Role roleForId : roleList) {
+                            listOfIds.add(roleForId.getIdLong());
+                        }
+                        scheduleAction(menu, guild, msgChan,
+                                member, new MusicRolePerm(), listOfIds);
                     }
 
-                    scheduleAction(menu, guild, msgChan,
-                            member, Config.SetType.VOICE_CHANNEL, listOfIds);
-                    return;
-                }
-
-                Config.setGuildInfo(Config.SetType.VOICE_CHANNEL, guild, voiceChan.getIdLong());
-                message.addReaction("\u2705").queue();
-
-                break;
-
-            case "admin":
-                List<Member> memberList = new ArrayList<>(createMemberMap(guild, param).values());
-
-                // Check if there are multiple users.
-                Member mem = null;
-                if (memberList.isEmpty()) {
-                    MessageUtil.sendError("No admins found to set.", msgChan);
-                    return;
-                } else if (memberList.size() == 1) {
-                    mem = memberList.get(0);
-                } else {
-                    String menuString = createMenu(memberList);
-                    Message menu = msgChan.sendMessage(menuString).complete();
-
-                    List<Long> listOfIds = new ArrayList<>();
-                    for (Member memberForId : memberList) {
-                        listOfIds.add(memberForId.getUser().getIdLong());
-                    }
-
-                    scheduleAction(menu, guild, msgChan,
-                            member, Config.SetType.ADMIN, listOfIds);
-                    return;
-                }
-
-                Config.setGuildInfo(Config.SetType.ADMIN, guild, mem.getUser().getIdLong());
-                message.addReaction("\u2705").queue();
-                break;
-
-            case "music_role":
-                List<Role> roleList = guild.getRolesByName(param, true);
-
-                // Check if there are multiple users.
-                Role role = null;
-                if (roleList.isEmpty()) {
-                    MessageUtil.sendError("No roles found to set.", msgChan);
-                    return;
-                } else if (roleList.size() == 1) {
-                    role = roleList.get(0);
-                } else {
-                    String menuString = createMenu(roleList);
-                    Message menu = msgChan.sendMessage(menuString).complete();
-
-                    List<Long> listOfIds = new ArrayList<>();
-
-                    for (Role roleForId : roleList) {
-                        listOfIds.add(roleForId.getIdLong());
-                    }
-
-                    scheduleAction(menu, guild, msgChan,
-                            member, Config.SetType.ADMIN, listOfIds);
-                    return;
-                }
-
-                Config.setGuildInfo(Config.SetType.MUSIC_ROLE, guild, role.getIdLong());
-                message.addReaction("\u2705").queue();
-
-                break;
-            default:
-                MessageUtil.sendError("Invalid set parameters." +
-                        " Valid parameters to be set are ``text_channel``," +
-                        "``voice_channel``," +
-                        "``admin``, or" +
-                        "``music_role``.", msgChan);
-                break;
+                    break;
+                default:
+                    MessageUtil.sendError("Invalid set parameters." +
+                            " Valid parameters to be set are ``text_channel``," +
+                            "``voice_channel``," +
+                            "``admin``, or" +
+                            "``music_role``.", msgChan);
+                    break;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
