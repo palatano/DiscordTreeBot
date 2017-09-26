@@ -4,7 +4,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
-import org.apache.poi.ss.formula.functions.Now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;

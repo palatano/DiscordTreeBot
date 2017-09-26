@@ -4,7 +4,6 @@ import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.guild.GenericGuildEvent;
 import net.dv8tion.jda.core.events.message.GenericMessageEvent;
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
-import org.apache.commons.math3.analysis.function.Add;
 import tree.Config;
 import tree.command.analysis.GoogleSearchCommand;
 import tree.command.analysis.YoutubeCommand;

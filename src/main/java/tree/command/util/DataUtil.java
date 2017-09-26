@@ -9,7 +9,6 @@ import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.time.StopWatch;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.imageio.ImageIO;

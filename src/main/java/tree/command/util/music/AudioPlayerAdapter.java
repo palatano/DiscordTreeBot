@@ -43,7 +43,7 @@ public class AudioPlayerAdapter extends ListenerAdapter {
     private static Logger log = LoggerFactory.getLogger(AudioPlayerAdapter.class);
 
     private AudioPlayerAdapter() {
-
+        System.out.println();
         this.musicManagers = new HashMap<>();
 
         this.playerManager = new DefaultAudioPlayerManager();

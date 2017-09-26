@@ -1,7 +1,8 @@
 package tree.command.analysis;
 
+import com.google.common.base.Stopwatch;
+import javafx.scene.paint.Stop;
 import net.dv8tion.jda.core.entities.*;
-import org.apache.commons.lang3.time.StopWatch;
 import tree.command.util.MessageUtil;
 import tree.command.data.SerializableMessageHistory;
 import tree.command.util.DataUtil;
@@ -28,7 +29,7 @@ public class UniqueUserCommand implements AnalysisCommand {
     Map<String, String> userMap;
     DataUtil dataUtil;
     SerializableMessageHistory msgHistory;
-    StopWatch stopwatch;
+    Stopwatch stopwatch;
     private Calendar cal;
 
     public UniqueUserCommand(String commandName) {
@@ -120,7 +121,7 @@ public class UniqueUserCommand implements AnalysisCommand {
         dataUtil.createUniqueUsersMap();
         List<Message> messageList = null;
         msgHistory = new SerializableMessageHistory(msgChan);
-        stopwatch = new StopWatch();
+        stopwatch = Stopwatch.createUnstarted();
         stopwatch.start();
         messageList = getFirstMessagesBySpecifiedDay(cal, msgHistory);
         stopwatch.stop();

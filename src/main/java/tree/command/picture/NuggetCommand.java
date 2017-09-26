@@ -1,9 +1,9 @@
 package tree.command.picture;
 
+import com.google.common.base.Stopwatch;
 import javafx.util.Pair;
 import net.dv8tion.jda.core.MessageBuilder;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.time.StopWatch;
 import tree.Config;
 import tree.command.util.MessageUtil;
 import tree.commandutil.CommandManager;
@@ -34,7 +34,7 @@ public class NuggetCommand implements PictureCommand {
     private PriorityQueue<Pair<Integer, Long>> photoIDsPosted;
     private int numNugCount = 0;
     private boolean nugPicAllowed = true;
-    private StopWatch nuggetStopWatch;
+    private Stopwatch nuggetStopWatch;
     private Set<Integer> pastIDs;
     private ScheduledExecutorService scheduler;
 
@@ -52,7 +52,7 @@ public class NuggetCommand implements PictureCommand {
     public NuggetCommand(String commandName) {
         this.commandName = commandName;
         photoIDsPosted = new PriorityQueue<>(Comparator.comparing(Pair::getValue));
-        nuggetStopWatch = new StopWatch();
+        nuggetStopWatch = Stopwatch.createUnstarted();
         nuggetStopWatch.start();
         pastIDs = new HashSet<>();
         scheduler = Executors.newScheduledThreadPool(1);

@@ -6,4 +6,4 @@ An automated discord bot in Java that interprets commands via the messaging UI o
 
 # Bot Website
 More information about the bot can be found here: 
-https://bots.discord.pw/bots/337627312830939136
+https://bots.discord.pw/bots/337627312830939136 
