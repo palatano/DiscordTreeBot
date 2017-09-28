@@ -4,12 +4,20 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import javafx.util.Pair;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.entities.*;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import tree.command.util.MessageUtil;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -26,7 +34,9 @@ public class TrackScheduler extends AudioEventAdapter {
     private Map<Guild, AudioTrack> lastSongAddedMap;
     public Map<String, AudioTrack> storedSongMap;
     private static final int MAX_SONGS_LISTED = 7;
-
+    private static final String BLACK_BAR = "\u25ac";
+    private static final String PLAY_BAR = "\ud83d\udd18";
+    private static final int BAR_LENGTH = 20;
 
     public void removeLastTrack(Guild guild, MessageChannel msgChan, Message message) {
         AudioTrack track = lastSongAddedMap.get(guild);
@@ -114,37 +124,35 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
-    private String getSongDuration(long millis) {
-        long hours = TimeUnit.MILLISECONDS.toHours(millis) % 24;
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
-        String hoursString = (hours / 10L) == 0 ? "0" + hours : String.valueOf(hours);
-        String minutesString = (minutes / 10L) == 0 ? "0" + minutes : String.valueOf(minutes);
-        String secondsString = (seconds / 10L) == 0 ? "0" + seconds : String.valueOf(seconds);
-        if (hours > 0 && hours < 2) {
-            return "(" + hoursString + ":" + minutesString + ":" + secondsString + ")";
-        } else {
-            return "(" +  minutesString + ":" + secondsString + ")";
-        }
-    }
-
     public String printSongList() {
         String list = "";
         int counter = 0;
+
         // For first song:
-        if (player.getPlayingTrack() == null) {
+        AudioTrack currTrack = player.getPlayingTrack();
+        if (currTrack == null) {
             return "No songs are currently playing.";
         }
-        Member currMember = personAddedMap.get(player.getPlayingTrack());
-        AudioTrackInfo currentSongInfo = player.getPlayingTrack().getInfo();
-        list = "``Now Playing:`` **" + currentSongInfo.title + "** " + getSongDuration(currentSongInfo.length) +
+        Member currMember = personAddedMap.get(currTrack);
+        AudioTrackInfo currentSongInfo = currTrack.getInfo();
+        long pos = currTrack.getPosition();
+        long total = currTrack.getDuration();
+        boolean addHour = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
+        String duration = "``(" + getTimeStamp(pos, addHour) + "/" +
+                getTimeStamp(total, addHour) + ")``";
+
+        list = "``Now Playing:`` **" + currentSongInfo.title + "** " + duration +
                 ", added by ``" + currMember.getEffectiveName() + "``\n\n";
 
         for (AudioTrack track : queue) {
             AudioTrackInfo info = track.getInfo();
             Member member = personAddedMap.get(track);
+            long totalIter = currTrack.getDuration();
+            boolean addHourIter = new Timestamp(totalIter).toLocalDateTime().getHour() - 19 > 0;
+            String durationIter = "``(" + getTimeStamp(total, addHourIter) + ")``";
+
             list += "``Song " + ++counter + ")`` **" + info.title + "** " +
-                    getSongDuration(info.length) + " - added by ``" + member.getEffectiveName() + "``\n";
+                    durationIter + " - added by ``" + member.getEffectiveName() + "``\n";
             if (counter == MAX_SONGS_LISTED) {
                 break;
             }
@@ -155,23 +163,105 @@ public class TrackScheduler extends AudioEventAdapter {
         return list;
     }
 
-    public String showCurrentSong() {
+    public MessageEmbed showCurrentSong() {
         String list = "";
-        if (player.getPlayingTrack() == null) {
-            return "No songs are currently playing.";
+        EmbedBuilder embed = new EmbedBuilder();
+        AudioTrack currTrack = player.getPlayingTrack();
+        if (currTrack == null) {
+            return embed.appendDescription("No songs are currently playing.").build();
         }
-        Member currMember = personAddedMap.get(player.getPlayingTrack());
-        AudioTrackInfo currentSongInfo = player.getPlayingTrack().getInfo();
-        list += "``Now Playing:`` **" + currentSongInfo.title + "** " + getSongDuration(currentSongInfo.length) +
-                ", added by ``" + currMember.getEffectiveName() + "``\n\n";
+
+        getLyricsURL(currTrack.getInfo().title);
+        Member currMember = personAddedMap.get(currTrack);
+        AudioTrackInfo currentSongInfo = currTrack.getInfo();
+        list += currentSongInfo.title;
+
+        String nextSong = "";
         if (!queue.isEmpty()) {
             AudioTrack nextTrack = queue.peek();
             Member nextMember = personAddedMap.get(nextTrack);
             AudioTrackInfo nextTrackInfo = nextTrack.getInfo();
-            list += "``Next Song``: **" + nextTrackInfo.title + "** " + getSongDuration(nextTrackInfo.length) +
-                    ", added by ``" + nextMember.getEffectiveName() + "``\n";
+            long total = nextTrack.getDuration();
+            boolean addHourNext = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
+            String durationNext = "(" + getTimeStamp(total, addHourNext) + ")";
+            nextSong += "Next Song: " + nextTrackInfo.title + " - " + durationNext +
+                    ", added by " + nextMember.getEffectiveName() + "\n";
         }
-        return list;
+
+        embed.addField("[" + list + "](" + "https://images-ext-1.discordapp.net/external/OPzZxwonjTBq3WLx3xaG2Drro3y4eGYkNAt4-rnSJAA/https/cdn.discordapp.com/avatars/337627312830939136/a992a2003c85ae69a5bf5d3fe875460a.png?width=80&height=80", createBar(currTrack), true);
+        embed.setFooter(nextSong, "https://images-ext-1.discordapp.net/external/OPzZxwonjTBq3WLx3xaG2Drro3y4eGYkNAt4-rnSJAA/https/cdn.discordapp.com/avatars/337627312830939136/a992a2003c85ae69a5bf5d3fe875460a.png?width=80&height=80");
+        return embed.build();
+    }
+
+    private String getTimeStamp(long val, boolean addHour) {
+        Timestamp stamp = new Timestamp(val);
+        // For some reason, the default returned from youtube is 1969-12-31 19:00:00.0, so
+        // subtract 19 from the hours to get adjusted time.
+        int hour = stamp.toLocalDateTime().getHour() - 19;
+        String hourString = hour < 10 ? "0" + hour : String.valueOf(hour);
+        int minute = stamp.toLocalDateTime().getMinute();
+        String minuteString = minute < 10 ? "0" + minute : String.valueOf(minute);
+        int second = stamp.toLocalDateTime().getSecond();
+        String secondString = second < 10 ? "0" + second : String.valueOf(second);
+
+        return (hour == 0 && !addHour) ? minuteString + ":" + secondString :
+                hourString + ":" + minuteString + ":" + secondString;
+    }
+
+    private String createBar(AudioTrack track) {
+        StringBuilder bar = new StringBuilder();
+        long pos = track.getPosition();
+        long total = track.getDuration();
+        int calculatedPos = (int) Math.floor ((pos * BAR_LENGTH) / total);
+        for (int i = 0; i < BAR_LENGTH; i++) {
+            if (i == calculatedPos) {
+                bar.append(PLAY_BAR);
+            } else {
+                bar.append(BLACK_BAR);
+            }
+        }
+        boolean addHour = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
+        String duration = "``[" + getTimeStamp(pos, addHour) + "/" +
+                getTimeStamp(total, addHour) + "]``";
+        bar.append("  " + duration);
+        return bar.toString();
+    }
+
+    public String getLyricsURL(String search) {
+        URI url = null;
+        try {
+            url = new URIBuilder("https://genius.com/search")
+                    .addParameter("q", search)
+                    .build();
+            Document links2 = Jsoup.connect(url.toString())
+                    .userAgent("TreeBot")
+                    .get();
+            Elements links = Jsoup.connect(url.toString())
+                    .userAgent("TreeBot")
+                    .get()
+                    .select(".g");
+
+            Element result2 = links.select(".mini-card").first();
+//                    .select("a.mini-card");
+            if (links.isEmpty()) {
+                return null;
+            }
+            for (Element link : links) {
+                String title = link.text();
+                String resultUrl = link.absUrl("href")
+                        .replace(")", "\\)");
+                System.out.println(resultUrl);
+                if (!resultUrl.startsWith("http")) {
+                    continue;
+                }
+                return resultUrl;
+            }
+
+        } catch (IOException | URISyntaxException e) {
+                e.printStackTrace();
+        }
+
+        return null;
     }
 
 }

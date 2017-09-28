@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import marytts.util.data.audio.AudioPlayer;
 import marytts.util.data.audio.MaryAudioUtils;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.audio.AudioReceiveHandler;
@@ -26,33 +25,20 @@ import net.dv8tion.jda.core.managers.AudioManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import tree.Config;
-import tree.command.data.GoogleResults;
-import tree.command.data.MessageWrapper;
 import tree.command.util.MessageUtil;
 import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.speech.AudioReceiveListener;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.VoiceCommand;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 
 public class VoiceSearchCommand implements VoiceCommand {
     private String commandName;
@@ -63,9 +49,11 @@ public class VoiceSearchCommand implements VoiceCommand {
     private static SpeechClient speech;
     private static RecognitionConfig config;
     private Map<Guild, Message> guildMessageMap;
+    private Map<Guild, Boolean> guildVoiceStartedMap;
 
     public VoiceSearchCommand(String commandName) {
         this.commandName = commandName;
+        this.guildVoiceStartedMap = new HashMap<>();
         handler = new AudioReceiveListener(1.0);
         guildMessageMap = new HashMap<>();
 
@@ -93,6 +81,17 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
+        if (guildVoiceStartedMap.containsKey(guild)) {
+            MessageUtil.sendError("Voice search is already being used.", msgChan);
+            return;
+        }
+
+        if (!guild.getAudioManager().isConnected()) {
+            MessageUtil.sendError("Bot is not connected to a voice channel.", msgChan);
+            return;
+        }
+
+        guildVoiceStartedMap.put(guild, true);
         search(guild, msgChan, member);
     }
 
@@ -110,7 +109,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         File in = new File ("in.raw");
 
-        for (byte[] data : handler.userQueue) {
+        for (byte[] data : handler.queue) {
             baos.write(data);
         }
         FileUtils.writeByteArrayToFile(in, baos.toByteArray());
@@ -118,14 +117,9 @@ public class VoiceSearchCommand implements VoiceCommand {
     }
 
     private void search(Guild guild, MessageChannel msgChan, Member member) {
-        if (!guild.getAudioManager().isConnected()) {
-            MessageUtil.sendError("Bot is not connected to a voice channel.", msgChan);
-            return;
-        }
         AudioManager audioManager = guild.getAudioManager();
 
         AudioReceiveHandler lastAh = audioManager.getReceiveHandler();
-        net.dv8tion.jda.core.audio.AudioSendHandler lastSh = audioManager.getSendingHandler();
         handler.reset();
         audioManager.setReceivingHandler(handler);
 
@@ -137,12 +131,18 @@ public class VoiceSearchCommand implements VoiceCommand {
                 audioManager.setReceivingHandler(lastAh);
                 writeToFile();
                 getResults(guild, msgChan, member);
+                guildVoiceStartedMap.remove(guild);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
         };
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         scheduler.schedule(runnable,5, TimeUnit.SECONDS);
     }
 
@@ -184,7 +184,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         message = message.editMessage("Received your input. Transcribing...").complete();
         guildMessageMap.put(guild, message);
         while (!file.exists()) {
-            Thread.sleep(50);
+            Thread.sleep(100);
         }
 
         String fileName = "final.wav";

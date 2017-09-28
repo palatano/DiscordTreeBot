@@ -1,9 +1,6 @@
 package tree.command.music;
 
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.command.util.music.AudioPlayerAdapter;
@@ -40,7 +37,7 @@ public class NowPlayingCommand implements MusicCommand {
     }
 
     private void showCurrentSong(GuildMusicManager musicManager, MessageChannel msgChan) {
-        String currentSong = musicManager.scheduler.showCurrentSong();
+        MessageEmbed currentSong = musicManager.scheduler.showCurrentSong();
         msgChan.sendMessage(currentSong).queue();
     }
 

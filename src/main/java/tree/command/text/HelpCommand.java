@@ -35,11 +35,11 @@ public class HelpCommand implements TextCommand {
     }
 
     private MessageEmbed getCommandsHelp() {
-        StringBuilder sb = new StringBuilder();
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("Welcome to TreeBot. See the following options for more information.");
-        embed.setDescription("``;help music`` - Music command list.\n" +
-                        "``;help picture`` - Pictures command list.\n" +
+        embed.setTitle("Welcome to TreeBot. See the following options or type for more information.");
+        embed.setDescription("``;bot`` - Displays links for website and support and other info.\n" +
+                "``;help music`` - Music command list.\n" +
+                "``;help picture`` - Pictures command list.\n" +
                 "``;help analysis`` - Analysis and searching command list.\n" +
                 "``;help voice`` - Voice command list.\n" +
                 "``;help misc`` - Text command list.");

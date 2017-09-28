@@ -26,15 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class AudioReceiveListener implements AudioReceiveHandler
 {
-//    public ConcurrentLinkedQueue<byte[]> bridgeQueue = new ConcurrentLinkedQueue<>();
-//    public ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    public static final double STARTING_MB = 0.5;
-    public static final int CAP_MB = 16;
-    public static final double PCM_MINS = 2;
-    public double AFK_LIMIT = 2;
-    public boolean canReceive = true;
     public double volume = 1.0;
-    public File pcmFile;
 
     public static final int MAX_RECORD_TIME = 3840 * 50 * 15;
     public byte[] uncompVoiceData = new byte[MAX_RECORD_TIME]; //3840bytes/array * 50arrays/sec * 5sec = 5sec
@@ -43,17 +35,15 @@ public class AudioReceiveListener implements AudioReceiveHandler
     public byte[] uncompUserVoiceData = new byte[MAX_RECORD_TIME]; //3840bytes/array * 50arrays/sec * 5sec = 5sec
     public int uncompUserIndex = 0;
     public ConcurrentLinkedQueue<byte[]> queue;
-    public ConcurrentLinkedQueue<byte[]> userQueue;
+//    public ConcurrentLinkedQueue<byte[]> userQueue;
 
     public AudioReceiveListener(double volume) {
         this.volume = volume;
-//        this.voiceChannel = voiceChannel;
-
     }
 
     public void reset() {
         queue = new ConcurrentLinkedQueue<>();
-        userQueue = new ConcurrentLinkedQueue<>();
+//        userQueue = new ConcurrentLinkedQueue<>();
         uncompVoiceData = new byte[MAX_RECORD_TIME];
         uncompIndex = 0;
         uncompUserVoiceData = new byte[MAX_RECORD_TIME];
@@ -81,28 +71,12 @@ public class AudioReceiveListener implements AudioReceiveHandler
     public void handleCombinedAudio(CombinedAudio combinedAudio) {
         byte[] data = combinedAudio.getAudioData(1.0);
         queue.add(data);
-//        for (byte b : combinedAudio.getAudioData(1.0)) {
-//            if (uncompIndex >= MAX_RECORD_TIME) {
-////            System.out.println("COMBINED AUDIO ARRAY FULL");
-//                return;
-//            }
-//            uncompVoiceData[uncompIndex++] = b;
-//        }
-
     }
 
 
     @Override
     public void handleUserAudio(UserAudio userAudio) {
-//        for (byte b : userAudio.getAudioData(1.0)) {
-            userQueue.add(userAudio.getAudioData(1.0));
-//            if (uncompUserIndex >= MAX_RECORD_TIME) {
-////            System.out.println("COMBINED AUDIO ARRAY FULL");
-//                return;
-//            }
-////            System.out.println("USER AUDIO ARRAY FULL");
-//            uncompUserVoiceData[uncompUserIndex++] = b;
-
+            queue.add(userAudio.getAudioData(1.0));
     }
 
     public static void streamRecognizeFile(byte[] data) throws Exception {
