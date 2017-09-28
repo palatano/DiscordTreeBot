@@ -2,9 +2,7 @@ package tree.command.util.music;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import com.sedmelluq.discord.lavaplayer.track.*;
 import javafx.util.Pair;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
@@ -26,7 +24,9 @@ public class TrackScheduler extends AudioEventAdapter {
     private final BlockingQueue<AudioTrack> queue;
     private Map<AudioTrack, Member> personAddedMap;
     private Map<Guild, AudioTrack> lastSongAddedMap;
+    public Map<String, AudioTrack> storedSongMap;
     private static final int MAX_SONGS_LISTED = 7;
+
 
     public void removeLastTrack(Guild guild, MessageChannel msgChan, Message message) {
         AudioTrack track = lastSongAddedMap.get(guild);
@@ -57,6 +57,7 @@ public class TrackScheduler extends AudioEventAdapter {
         this.queue = new LinkedBlockingQueue<>();
         this.personAddedMap = new HashMap<>();
         this.lastSongAddedMap = new HashMap<>();
+        this.storedSongMap = new HashMap<>();
     }
 
     /**
@@ -87,6 +88,27 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         // Only start the next track if the end reason is suitable for it (FINISHED or LOAD_FAILED)
+
+        String name = track.getIdentifier();
+        // The track that just stopped is track, and the localTrack is the voice search file.
+        if (storedSongMap.containsKey(name)) {
+            if (name.contains("out.wav")) {
+                    AudioTrack stoppedTrack = storedSongMap.get(name);
+                    player.stopTrack();
+                    player.playTrack(stoppedTrack);
+            } else {
+                // Start the voice search file.
+                AudioTrack voiceTrack = storedSongMap.get(name);
+                AudioTrack copyTrack = track.makeClone();
+                copyTrack.setPosition(track.getPosition());
+                copyTrack.setUserData(voiceTrack.getUserData());
+                storedSongMap.remove(track.getIdentifier());
+                storedSongMap.put(voiceTrack.getIdentifier(), copyTrack);
+                player.playTrack(voiceTrack);
+            }
+            return;
+        }
+
         if (endReason.mayStartNext) {
             nextTrack();
         }

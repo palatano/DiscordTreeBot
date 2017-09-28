@@ -1,4 +1,4 @@
-package tree.command.util.music;
+package tree.command.util.speech;
 
 import net.dv8tion.jda.core.audio.AudioReceiveHandler;
 import net.dv8tion.jda.core.audio.AudioSendHandler;

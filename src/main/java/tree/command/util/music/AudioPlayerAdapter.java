@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import javafx.util.Pair;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -72,20 +73,46 @@ public class AudioPlayerAdapter extends ListenerAdapter {
         return musicManager;
     }
 
+    public void loadLocalAudio(String filePath, Member member) {
+        GuildMusicManager musicManager = getGuildAudioPlayer(member.getGuild());
+
+        playerManager.loadItemOrdered(musicManager, filePath, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack audioTrack) {
+                playLocalAudio(member.getGuild(), audioTrack, member);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist audioPlaylist) {
+
+            }
+
+            @Override
+            public void noMatches() {
+                System.out.println("Error. Should not be reached.");
+            }
+
+            @Override
+            public void loadFailed(FriendlyException e) {
+                System.out.println("File not found.");
+            }
+        });
+    }
 
     /**
      * Using the &add command, load and play a song on the channel.
      * @param channel
      * @param trackUrl
      */
-    public void loadAndPlay(final TextChannel channel, final String trackUrl, Member member) {
+    public void loadAndPlay(final TextChannel channel, final String trackUrl, Member member, boolean writeToChannel) {
         GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
 
         playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``").queue(m -> m.addReaction("\uD83D\uDC4D").queue());
-
+                if (writeToChannel) {
+                    channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``").queue(m -> m.addReaction("\uD83D\uDC4D").queue());
+                }
 
                 play(channel.getGuild(), musicManager, track, member);
             }
@@ -97,20 +124,25 @@ public class AudioPlayerAdapter extends ListenerAdapter {
                 if (firstTrack == null) {
                     firstTrack = playlist.getTracks().get(0);
                 }
-
-                channel.sendMessage("Adding to queue: ``" + firstTrack.getInfo().title + "`` (first track of playlist ``" + playlist.getName() + "``)").queue();
+                if (writeToChannel) {
+                    channel.sendMessage("Adding to queue: ``" + firstTrack.getInfo().title + "`` (first track of playlist ``" + playlist.getName() + "``)").queue();
+                }
 
                 play(channel.getGuild(), musicManager, firstTrack, member);
             }
 
             @Override
             public void noMatches() {
-                channel.sendMessage("Nothing found by ``" + trackUrl + "``").queue();
+                if (writeToChannel) {
+                    channel.sendMessage("Nothing found by ``" + trackUrl + "``").queue();
+                }
             }
 
             @Override
             public void loadFailed(FriendlyException exception) {
-                channel.sendMessage("Could not play: " + exception.getMessage()).queue();
+                if (writeToChannel) {
+                    channel.sendMessage("Could not play: " + exception.getMessage()).queue();
+                }
             }
         });
     }
@@ -143,6 +175,27 @@ public class AudioPlayerAdapter extends ListenerAdapter {
      */
     public static void connectToMusicChannel(AudioManager audioManager, Member member) {
         audioManager.openAudioConnection(member.getVoiceState().getChannel());
+    }
+
+    public void playLocalAudio(Guild guild, AudioTrack audioTrack, Member member) {
+        // Should be connected already.
+        // The handlers should be automatically changed, and the track should be paused, so
+        // continue playing it.
+        GuildMusicManager manager = getGuildAudioPlayer(guild);
+        AudioTrack lastTrack = manager.player.getPlayingTrack();
+        if (lastTrack != null) {
+
+//            copyTrack.setMarker(lastTrack.;);
+            // Add the copied track as the string, so that when the song is stopped, the
+            // voice sample track can start.
+            manager.scheduler.storedSongMap.put(lastTrack.getIdentifier(), audioTrack);
+//                    new Pair<>(audioTrack, lastTrack.getPosition()));
+            manager.player.stopTrack();
+        } else {
+            manager.player.stopTrack();
+            manager.player.playTrack(audioTrack);
+        }
+
     }
 
 }

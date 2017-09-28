@@ -206,7 +206,8 @@ public class GoogleSearchCommand implements AnalysisCommand {
             String description = list.size() == 0 ? doc.title() : list.get(0).attr("content");
 
             description = description.length() > 512 ? description.substring(0, 512) + "..." : description;
-            embed.setDescription(++resultIndex + ") " + "[" + title + "](" + redirLink + ")\n\n**Description:** " + description + "");
+            embed.setDescription(++resultIndex + ") " +
+                    "[" + title + "](" + redirLink + ")\n\n**Description:** " + description + "");
             break;
         }
 

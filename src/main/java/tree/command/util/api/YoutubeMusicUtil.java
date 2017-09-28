@@ -179,7 +179,7 @@ public class YoutubeMusicUtil {
         GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
                 .getGuildAudioPlayer(guild);
         musicManager.player.setPaused(false);
-        audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member);
+        audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member, true);
 
     }
 

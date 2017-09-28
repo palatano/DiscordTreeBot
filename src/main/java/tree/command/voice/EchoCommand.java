@@ -7,12 +7,8 @@ import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import net.dv8tion.jda.core.managers.AudioManager;
-import net.dv8tion.jda.core.utils.SimpleLog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tree.command.util.MessageUtil;
-import tree.command.util.music.AudioEchoHandler;
-import tree.command.util.speech.AudioReceiveListener;
+import tree.command.util.speech.AudioEchoHandler;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.VoiceCommand;
 
