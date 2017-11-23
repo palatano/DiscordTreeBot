@@ -199,6 +199,14 @@ public class MessageUtil {
         return "[" + getDate(msg) + "][" + MessageUtil.getTime(msg) + " EST]";
     }
 
+    public static String removeLastComma(String toChange) {
+        int lastCommaIndex = toChange.lastIndexOf(",");
+        if (lastCommaIndex != -1) {
+            return new StringBuilder(toChange).replace(lastCommaIndex, lastCommaIndex + 2, "").toString();
+        }
+        return toChange;
+    }
+
     /**
      * Get the user and message from an event.
      * @param msg - the current message.
@@ -216,6 +224,8 @@ public class MessageUtil {
         }
         return s;
     }
+
+
 
 
 }

@@ -1,15 +1,13 @@
 package tree.command.util;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.dv8tion.jda.core.entities.*;
 import tree.command.music.AddCommand;
 import tree.commandutil.type.Command;
 import tree.commandutil.util.CommandRegistry;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -25,7 +23,8 @@ public class MenuUtil {
 
     private MenuUtil() {
         commandMenuMap = new HashMap<>();
-        scheduler = Executors.newScheduledThreadPool(3);
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("Music Thread Pool").build();
+        scheduler = Executors.newScheduledThreadPool(3, factory);
         for (String commandName : MENU_COMMANDS) {
             ArrayList<Map> menuList = new ArrayList<>();
             menuList.add(MENU, new HashMap<Long, Long>());

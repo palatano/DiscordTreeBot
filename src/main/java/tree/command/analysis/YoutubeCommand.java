@@ -7,15 +7,9 @@ import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
-import com.google.api.services.youtube.model.Thumbnail;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import tree.Config;
-import tree.command.data.GoogleResults;
 import tree.command.data.MenuSelectionInfo;
 import tree.command.data.MessageWrapper;
 import tree.command.data.ReactionMenu;
@@ -23,15 +17,8 @@ import tree.command.util.AuthUtil;
 import tree.command.util.MessageUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
-import tree.commandutil.util.CommandRegistry;
 
-import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -251,7 +238,7 @@ public class YoutubeCommand implements AnalysisCommand {
         }
 
         List<SearchResult> searchResultList =
-                (List<SearchResult>) msInfo.getSongsToChoose();
+                (List<SearchResult>) msInfo.getListOfChoices();
 
         if (searchResultList.isEmpty()) {
             System.out.println("No more results found.");

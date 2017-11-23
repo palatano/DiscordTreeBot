@@ -120,7 +120,8 @@ public class InfoCommand implements AnalysisCommand {
 
     private int getMember(Map<Long, Member> memberMap, Guild guild, Member member, MessageChannel msgChan) {
         if (memberMap.isEmpty()) {
-            // No matches found.
+            MessageEmbed embed = getInfo(member);
+            msgChan.sendMessage(embed).queue();
             return -1;
         } else if (memberMap.size() == 1) {
             // Only one match found.
@@ -161,6 +162,7 @@ public class InfoCommand implements AnalysisCommand {
 
     public void getDateJoined(Guild guild, MessageChannel msgChan, Message message, Member member, String search) {
 
+        // If there is a menu currently running, run through it.
         if (!menuMemberList.isEmpty()) {
             long userId = member.getUser().getIdLong();
             long lastUserId = menuUtil.getUserId(commandName, msgChan);
@@ -173,6 +175,14 @@ public class InfoCommand implements AnalysisCommand {
         }
 
         search = search.replaceAll("@", "");
+        Map<Long, Member> combinedMap = getMemberMap(guild, search);
+
+        if (getMember(combinedMap, guild, member, msgChan) == -1) {
+            MessageUtil.sendError("No users found with name: " + search, msgChan);
+        }
+    }
+
+    private Map<Long, Member> getMemberMap(Guild guild, String search) {
         List<Member> memberListEffective = guild.getMembersByEffectiveName(search, true);
         List<Member> memberListUser = guild.getMembersByName(search, true);
         Map<Long, Member> combinedMap = new HashMap<>();
@@ -182,10 +192,7 @@ public class InfoCommand implements AnalysisCommand {
         for (Member memUser : memberListUser) {
             combinedMap.put(memUser.getUser().getIdLong(), memUser);
         }
-
-        if (getMember(combinedMap, guild, member, msgChan) == -1) {
-            MessageUtil.sendError("No users found with name: " + search, msgChan);
-        }
+        return combinedMap;
     }
 
     public String combine(String[] args) {
@@ -198,9 +205,8 @@ public class InfoCommand implements AnalysisCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        if (args.length <= 1) {
-            LoggerUtil.logMessage(logger, message, "No argument entered.");
-            MessageUtil.sendError("No argument entered.", msgChan);
+        if (args.length == 1) {
+            getMember(new HashMap<>(), guild, member, msgChan);
             return;
         }
 
@@ -220,30 +226,5 @@ public class InfoCommand implements AnalysisCommand {
         return commandName;
     }
 
-    @Deprecated
-    private int isWrappedCommand(String memberString, MessageChannel msgChan) {
-        for (int stringIndex = 0; stringIndex < memberString.length(); stringIndex++) {
-            char c = memberString.charAt(stringIndex);
-            if (c == '<') {
-                while(++stringIndex < memberString.length()) {
-                    char c2 = memberString.charAt(stringIndex);
-                    if (c2 == '>') {
-                        return 1;
-                    }
-                }
-                sendError("Wrap the name to search with <>. For example, " +
-                        CommandManager.botToken +
-                        getCommandName() +
-                        " <palat>", msgChan);
-                return 0;
-            } else if (c == '>') {
-                sendError("Wrap the name to search with <>. For example, " +
-                        CommandManager.botToken +
-                        getCommandName() +
-                        " <palat>", msgChan);
-                return 0;
-            }
-        }
-        return 2;
-    }
+
 }

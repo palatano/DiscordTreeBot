@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Valued Customer on 9/6/2017.
  */
 public class BotInfoCommand implements TextCommand {
-    private DataUtil dataUtil = new DataUtil();
+    private DataUtil dataUtil = DataUtil.getInstance();
     private String commandName;
     private static final String botURL = "https://bots.discord.pw/bots/337627312830939136";
     private static final String serverInviteLink = "https://discord.gg/5pTVpcM";
@@ -76,8 +76,6 @@ public class BotInfoCommand implements TextCommand {
         }
 
         dataUtil.writeGuildDataToFile("guildDataFile", output);
-
-
 
         long millis = System.currentTimeMillis() - Config.startTime;
         int day = (int) TimeUnit.MILLISECONDS.toDays(millis);

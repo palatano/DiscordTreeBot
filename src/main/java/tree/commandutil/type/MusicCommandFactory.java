@@ -54,6 +54,8 @@ public class MusicCommandFactory extends AbstractCommandFactory {
                 return new UndoCommand("undo");
             case "np":
                 return new NowPlayingCommand("np");
+            case "volume":
+                return new VolumeCommand("volume");
             default:
                 return null;
         }

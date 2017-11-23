@@ -37,6 +37,12 @@ public class TrackScheduler extends AudioEventAdapter {
     private static final String BLACK_BAR = "\u25ac";
     private static final String PLAY_BAR = "\ud83d\udd18";
     private static final int BAR_LENGTH = 20;
+    private MessageChannel lastTextChannel;
+    private static final String lyricsURL = "https://genius.com/search?q=";
+
+    public MessageChannel getLastTextChannel() {
+        return lastTextChannel;
+    }
 
     public void removeLastTrack(Guild guild, MessageChannel msgChan, Message message) {
         AudioTrack track = lastSongAddedMap.get(guild);
@@ -75,12 +81,15 @@ public class TrackScheduler extends AudioEventAdapter {
      *
      * @param track The track to play or add to queue.
      */
-    public void queue(AudioTrack track, Member member) {
+    public void queue(AudioTrack track, Member member, MessageChannel msgChan) {
         // Calling startTrack with the noInterrupt set to true will start the track only if nothing is currently playing. If
         // something is playing, it returns false and does nothing. In that case the player was already playing so this
         // track goes to the queue instead.
+        lastTextChannel = msgChan;
         personAddedMap.put(track, member);
         lastSongAddedMap.put(member.getGuild(), track);
+
+        player.setPaused(false);
         if (!player.startTrack(track, true)) {
             queue.offer(track);
         }
@@ -125,7 +134,6 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public String printSongList() {
-        String list = "";
         int counter = 0;
 
         // For first song:
@@ -135,30 +143,35 @@ public class TrackScheduler extends AudioEventAdapter {
         }
         Member currMember = personAddedMap.get(currTrack);
         AudioTrackInfo currentSongInfo = currTrack.getInfo();
+
         long pos = currTrack.getPosition();
         long total = currTrack.getDuration();
+        long totalPlaylistLength = total;
+
         boolean addHour = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
         String duration = "``(" + getTimeStamp(pos, addHour) + "/" +
                 getTimeStamp(total, addHour) + ")``";
 
-        list = "``Now Playing:`` **" + currentSongInfo.title + "** " + duration +
+        String list = "``Now Playing:`` **" + currentSongInfo.title + "** " + duration +
                 ", added by ``" + currMember.getEffectiveName() + "``\n\n";
 
         for (AudioTrack track : queue) {
             AudioTrackInfo info = track.getInfo();
             Member member = personAddedMap.get(track);
-            long totalIter = currTrack.getDuration();
-            boolean addHourIter = new Timestamp(totalIter).toLocalDateTime().getHour() - 19 > 0;
-            String durationIter = "``(" + getTimeStamp(total, addHourIter) + ")``";
+            long totalIter = track.getDuration();
+            if (counter < MAX_SONGS_LISTED) {
+                boolean addHourIter = new Timestamp(totalIter).toLocalDateTime().getHour() - 19 > 0;
+                String durationIter = "``(" + getTimeStamp(totalIter, addHourIter) + ")``";
 
-            list += "``Song " + ++counter + ")`` **" + info.title + "** " +
-                    durationIter + " - added by ``" + member.getEffectiveName() + "``\n";
-            if (counter == MAX_SONGS_LISTED) {
-                break;
+                list += "``Song " + ++counter + ")`` **" + info.title + "** " +
+                        durationIter + " - added by ``" + member.getEffectiveName() + "``\n";
             }
+            totalPlaylistLength += info.length;
         }
         list += "\n**Total number of songs: " + (queue.size() + 1) +
-                "**. Set the automatic playlist feature with" +
+                ". Total time: "
+                + getTimestampOfPlaylist()
+                + "**. Set the automatic playlist feature with" +
                 " ``;list on`` or ``list off``.";
         return list;
     }
@@ -171,24 +184,41 @@ public class TrackScheduler extends AudioEventAdapter {
             return embed.appendDescription("No songs are currently playing.").build();
         }
 
-        getLyricsURL(currTrack.getInfo().title);
+
+//        getLyricsURL(currTrack.getInfo().title);
         Member currMember = personAddedMap.get(currTrack);
         AudioTrackInfo currentSongInfo = currTrack.getInfo();
+
+        String lyricResultsURL = getLyricsResults(currentSongInfo.title);
+        String url = currentSongInfo.uri;
         list += currentSongInfo.title;
+        list = list.length() > 256 ? list.substring(0, 256) : list;
+
+        long pos = currTrack.getPosition();
+        long total = currTrack.getDuration();
+        boolean addHour = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
+        String duration = "``[" + getTimeStamp(pos, addHour) + "/" +
+                getTimeStamp(total, addHour) + "]``";
 
         String nextSong = "";
         if (!queue.isEmpty()) {
             AudioTrack nextTrack = queue.peek();
             Member nextMember = personAddedMap.get(nextTrack);
             AudioTrackInfo nextTrackInfo = nextTrack.getInfo();
-            long total = nextTrack.getDuration();
-            boolean addHourNext = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
-            String durationNext = "(" + getTimeStamp(total, addHourNext) + ")";
+            long nextTotal = nextTrack.getDuration();
+            boolean addHourNext = new Timestamp(nextTotal).toLocalDateTime().getHour() - 19 > 0;
+            String durationNext = "(" + getTimeStamp(nextTotal, addHourNext) + ")";
             nextSong += "Next Song: " + nextTrackInfo.title + " - " + durationNext +
                     ", added by " + nextMember.getEffectiveName() + "\n";
         }
 
-        embed.addField("[" + list + "](" + "https://images-ext-1.discordapp.net/external/OPzZxwonjTBq3WLx3xaG2Drro3y4eGYkNAt4-rnSJAA/https/cdn.discordapp.com/avatars/337627312830939136/a992a2003c85ae69a5bf5d3fe875460a.png?width=80&height=80", createBar(currTrack), true);
+        embed.setDescription("[" + list + "](" + url + ")" + "\n"
+                + createBar(currTrack) + "\n"
+        );
+        embed.addField("Length", duration, true);
+        embed.addField("Added By", personAddedMap.get(currTrack).getEffectiveName(),
+                true);
+        embed.addField("Lyrics", "[" + "Results" + "](" + lyricResultsURL + ")", true);
         embed.setFooter(nextSong, "https://images-ext-1.discordapp.net/external/OPzZxwonjTBq3WLx3xaG2Drro3y4eGYkNAt4-rnSJAA/https/cdn.discordapp.com/avatars/337627312830939136/a992a2003c85ae69a5bf5d3fe875460a.png?width=80&height=80");
         return embed.build();
     }
@@ -198,14 +228,12 @@ public class TrackScheduler extends AudioEventAdapter {
         // For some reason, the default returned from youtube is 1969-12-31 19:00:00.0, so
         // subtract 19 from the hours to get adjusted time.
         int hour = stamp.toLocalDateTime().getHour() - 19;
-        String hourString = hour < 10 ? "0" + hour : String.valueOf(hour);
         int minute = stamp.toLocalDateTime().getMinute();
-        String minuteString = minute < 10 ? "0" + minute : String.valueOf(minute);
         int second = stamp.toLocalDateTime().getSecond();
-        String secondString = second < 10 ? "0" + second : String.valueOf(second);
-
-        return (hour == 0 && !addHour) ? minuteString + ":" + secondString :
-                hourString + ":" + minuteString + ":" + secondString;
+        if (hour == 0 && !addHour) {
+            return String.format("%02d:%02d", minute, second);
+        }
+        return String.format("%02d:%02d:%02d", hour, minute, second);
     }
 
     private String createBar(AudioTrack track) {
@@ -220,28 +248,74 @@ public class TrackScheduler extends AudioEventAdapter {
                 bar.append(BLACK_BAR);
             }
         }
-        boolean addHour = new Timestamp(total).toLocalDateTime().getHour() - 19 > 0;
-        String duration = "``[" + getTimeStamp(pos, addHour) + "/" +
-                getTimeStamp(total, addHour) + "]``";
-        bar.append("  " + duration);
         return bar.toString();
     }
 
+    public int getNumberOfTracks() {
+        if (player.getPlayingTrack() == null) {
+            return 0;
+        }
+        return 1 + queue.size();
+    }
+
+    public String getTimestampOfPlaylist() {
+        AudioTrack currTrack = player.getPlayingTrack();
+        if (currTrack == null) {
+            return "Empty";
+        }
+
+        long totalLength = currTrack.getDuration() - currTrack.getPosition();
+        for (AudioTrack track : queue) {
+            totalLength += track.getDuration();
+        }
+        boolean addHour = new Timestamp(totalLength)
+                .toLocalDateTime()
+                .getHour() - 19 > 0;
+        return getTimeStamp(totalLength, addHour);
+    }
+
+    public long getLengthOfPlaylist() {
+        AudioTrack currTrack = player.getPlayingTrack();
+        if (currTrack == null) {
+            return 0;
+        }
+
+        long totalLength = currTrack.getDuration();
+        for (AudioTrack track : queue) {
+            totalLength += track.getDuration();
+        }
+        return totalLength;
+    }
+
+    public String getLyricsResults(String search) {
+        search = search.replaceAll("\\[", "(")
+                .replaceAll("]", ")");
+        URI uri = null;
+        try {
+            uri = new URIBuilder(lyricsURL).addParameter("q", search).build();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return uri.toString();
+    }
+
+    @Deprecated
     public String getLyricsURL(String search) {
-        URI url = null;
+                URI url = null;
         try {
             url = new URIBuilder("https://genius.com/search")
                     .addParameter("q", search)
                     .build();
-            Document links2 = Jsoup.connect(url.toString())
+            Document doc = Jsoup.connect(url.toString())
                     .userAgent("TreeBot")
                     .get();
+//            Elements links = doc.select("body>routable-page>ng-outlet");
             Elements links = Jsoup.connect(url.toString())
                     .userAgent("TreeBot")
+                    .timeout(10*1000)
                     .get()
-                    .select(".g");
+                    .select("body>routable-page>ng-outlet");
 
-            Element result2 = links.select(".mini-card").first();
 //                    .select("a.mini-card");
             if (links.isEmpty()) {
                 return null;

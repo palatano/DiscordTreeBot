@@ -2,35 +2,46 @@ package tree.event;
 
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.guild.GenericGuildEvent;
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.core.events.message.GenericMessageEvent;
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.core.managers.AudioManager;
 import tree.Config;
 import tree.command.analysis.GoogleSearchCommand;
 import tree.command.analysis.YoutubeCommand;
 import tree.command.data.ReactionMenu;
 import tree.command.music.AddCommand;
+import tree.command.music.PlaylistCommand;
 import tree.command.music.RequestCommand;
 import tree.command.util.api.YoutubeMusicUtil;
+import tree.command.util.music.AudioPlayerAdapter;
+import tree.command.util.music.GuildMusicManager;
 import tree.commandutil.CommandManager;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import tree.commandutil.util.CommandRegistry;
+import tree.db.DatabaseManager;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by Admin on 7/29/2017.
  */
 public class TreeListener extends ListenerAdapter {
-    private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L, 337641574249005065L};
-    private static final long[] TREES_CHANNELS = {249791455592316930L, 269577202016845824L, 346493255896268802L};
+    private static final long[] TESTING_CHANNELS = {314495018079617025L, 345931676746121216L,
+            337641574249005065L, 374224008922529792L};
+    private DatabaseManager db = DatabaseManager.getInstance();
 
     private void searchOptionFromMenu(Guild guild, MessageChannel msgChan,
                                       Member member, long menuId,
                                       ReactionMenu reactionMenu, int index) {
 
         String commandName = reactionMenu.getCommandName();
+        if (reactionMenu.isClicked()) {
+            return;
+        }
 
         if (commandName.equals("youtube")) {
             YoutubeCommand youtubeCommand = (YoutubeCommand) CommandRegistry.getCommand(commandName);
@@ -46,6 +57,14 @@ public class TreeListener extends ListenerAdapter {
                 reactionMenu.clicked();
                 googleSearchCommand.nextOptionSelected(guild, msgChan, member);
             }
+        } else if (commandName.equals("list")) {
+            PlaylistCommand playlistCommand =
+                    (PlaylistCommand) CommandRegistry.getCommand(commandName);
+            if (playlistCommand.isAllowedUser(guild, member)) {
+                reactionMenu.clicked();
+                playlistCommand.next(guild, msgChan, member);
+            }
+
         }
     }
 
@@ -53,6 +72,9 @@ public class TreeListener extends ListenerAdapter {
                                        Member member, long menuId,
                                        ReactionMenu reactionMenu, int index) {
         String commandName = reactionMenu.getCommandName();
+        if (reactionMenu.isClicked()) {
+            return;
+        }
 
         // Figure out where to forward the command with the option given. The return value can be an int.
         if (commandName.equals("add")) {
@@ -166,6 +188,11 @@ public class TreeListener extends ListenerAdapter {
             return;
         }
 
+        Message msg = event.getMessage();
+        if (!msg.getContent().startsWith(";")) {
+            return;
+        }
+
         // If testing only, only allow commands in testing server.
         if (Config.CONFIG.isTesting()) {
             if (!event.getChannelType().isGuild() || !testingOnly(event.getTextChannel())) {
@@ -173,15 +200,10 @@ public class TreeListener extends ListenerAdapter {
             }
         } else {
             if (!event.getChannelType().isGuild() ||
-                    !isAllowedTextChannel(event.getGuild(), event.getTextChannel()) ||
+                    !db.isAllowedTextChannel(event.getGuild(), event.getTextChannel()) ||
                     testingOnly(event.getTextChannel())) {
                 return;
             }
-        }
-
-        Message msg = event.getMessage();
-        if (!msg.getContent().startsWith(";")) {
-            return;
         }
 
         CommandManager.messageCommand(msg);
@@ -196,21 +218,22 @@ public class TreeListener extends ListenerAdapter {
         return false;
     }
 
-    private boolean isAllowedTextChannel(Guild guild, MessageChannel msgChan) {
-        long textChanId = msgChan.getIdLong();
-        return Config.isAllowedTextChannel(guild, textChanId);
-    }
-
-    private boolean inTreesChannel(MessageReceivedEvent event) {
-        if (event.getGuild().getName().equals("/r/trees")) {
-            for (long id : TREES_CHANNELS) {
-                if (event.getTextChannel().getIdLong() == id) {
-                    return true;
-                }
-            }
-            return false;
+    @Override
+    public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
+        Guild guild = event.getGuild();
+        VoiceChannel channel = event.getChannelLeft();
+        Member member = guild.getSelfMember();
+        List<Member> memberList = channel.getMembers();
+        // Pause the player automatically.
+        AudioPlayerAdapter playerAdapter = AudioPlayerAdapter.audioPlayerAdapter;
+        GuildMusicManager musicManager = playerAdapter.getGuildAudioPlayer(guild);
+        boolean isPaused = musicManager.player.isPaused();
+        if (memberList.size() == 1 && memberList.get(0).equals(member) && !isPaused) {
+            musicManager.player.setPaused(true);
+            String notification = "All users have left **" + channel.getName() +
+                    "**, player is now paused. Type ``;unpause`` to unpause.";
+            MessageChannel msgChan = musicManager.scheduler.getLastTextChannel();
+            msgChan.sendMessage(notification).queue();
         }
-        return true;
     }
-
 }

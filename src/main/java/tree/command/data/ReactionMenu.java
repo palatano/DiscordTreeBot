@@ -47,4 +47,7 @@ public class ReactionMenu {
         isClicked = true;
     }
 
+    public boolean isClicked() {
+        return isClicked;
+    }
 }

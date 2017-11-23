@@ -22,7 +22,7 @@ import java.util.TimerTask;
  * Created by Admin on 7/28/2017.
  */
 public class CommandManager {
-    public static final String[] adminCommands = {"uniqueusers"};
+    public static final String[] adminCommands = {"uniqueusers", "broadcast"};
     public static final String[] ownerCommands = {"shutdown", "broadcast"};
     public static final Map<Guild, Map<Long, ReactionMenu>> reactionMenuMap = new HashMap<>();
     private static Logger log = LoggerFactory.getLogger(CommandManager.class);
@@ -43,7 +43,7 @@ public class CommandManager {
         for (String ownerCommand : ownerCommands) {
             if (command.getCommandName().equals(ownerCommand) && !Config.isOwner(message.getAuthor().getIdLong())) {
                 System.out.println(message.getAuthor() +
-                        " tried to enter an wner command at " +
+                        " tried to enter an owner command at " +
                         MessageUtil.timeStamp(message));
                 return true;
             }

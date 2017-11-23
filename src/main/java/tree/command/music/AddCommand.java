@@ -1,10 +1,8 @@
 package tree.command.music;
 
-import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tree.Config;
 import tree.command.data.MenuSelectionInfo;
 import tree.command.data.MessageWrapper;
 import tree.command.data.ReactionMenu;
@@ -12,18 +10,19 @@ import tree.command.util.MessageUtil;
 import tree.command.util.api.YoutubeMusicUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
+import tree.db.DatabaseManager;
 import tree.util.LoggerUtil;
 
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by Valued Customer on 8/12/2017.
  */
 public class AddCommand implements MusicCommand {
+    private DatabaseManager db = DatabaseManager.getInstance();
     private String commandName;
     private YoutubeMusicUtil ytUtil;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
@@ -40,7 +39,7 @@ public class AddCommand implements MusicCommand {
                 if (userSelectionMap.containsKey(member.getUser().getIdLong())) {
                     MenuSelectionInfo msInfo = userSelectionMap.get(member.getUser().getIdLong());
                     ytUtil.addSong(guild, msInfo.getChannel(), getCommandName(),
-                            member, (String) msInfo.getSongsToChoose().get(0));
+                            member, (String) msInfo.getListOfChoices().get(0));
                 }
                 deleteSelectionEntry(guild, member.getUser().getIdLong());
         };
@@ -137,7 +136,7 @@ public class AddCommand implements MusicCommand {
 
         if (userChannelMap.containsKey(userId)) {
             MenuSelectionInfo msInfo = userChannelMap.get(userId);
-            String url = ytUtil.getSongURL(option, msgChan, (List<String>) msInfo.getSongsToChoose());
+            String url = ytUtil.getSongURL(option, msgChan, (List<String>) msInfo.getListOfChoices());
             ytUtil.addSong(guild, msgChan, commandName, member, url);
             reset(guild, member.getUser().getIdLong());
         }
@@ -164,7 +163,7 @@ public class AddCommand implements MusicCommand {
         }
 
         VoiceChannel voiceChan = member.getVoiceState().getChannel();
-        if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
+        if (!db.isAllowedVoiceChannel(guild, voiceChan)) {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
             return;
         }

@@ -8,6 +8,21 @@
     <artifactId>Discord-DAU</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <!-- INSTANCE_CONNECTION_NAME from Cloud Console > SQL > Instance Details > Properties
+             or gcloud sql instances describe <instance>
+             project:region:instance for Cloud SQL 2nd Generation or
+             project:instance        for Cloud SQL 1st Generation
+        -->
+        <INSTANCE_CONNECTION_NAME>treebot-175716:us-central1:treebot-1650045</INSTANCE_CONNECTION_NAME>
+        <user>root</user>
+        <password>Wq7lLC6c</password>
+        <database>guild</database>
+
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+    </properties>
+
     <build>
         <plugins>
 
@@ -35,10 +50,12 @@
 
                             <transformers>
                                 <!-- add Main-Class to manifest file -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>tree.TreeMain</mainClass>
                                 </transformer>
                             </transformers>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <!--<artifactSet>-->
                         </configuration>
                     </execution>
@@ -152,18 +169,33 @@
                 <version>5.2</version>
             </dependency>
 
+            <!--<dependency>-->
+                <!--<groupId>marytts</groupId>-->
+                <!--<artifactId>marytts-runtime</artifactId>-->
+                <!--<version>5.1-SNAPSHOT</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>marytts</groupId>-->
+                <!--<artifactId>marytts-lang-de</artifactId>-->
+                <!--<version>5.1-SNAPSHOT</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>marytts</groupId>-->
+                <!--<artifactId>voice-dfki-pavoque-neutral-hsmm</artifactId>-->
+                <!--<version>5.0-SNAPSHOT</version>-->
+            <!--</dependency>-->
+
             <!-- Driver injected at runtime by the use of <use-google-connector-j> in appengine-web.xml -->
             <dependency> <!-- Only used locally -->
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.44</version>  <!-- v5.x.x is for production, v6.x.x EAP X DevAPI -->
+                <version>5.1.42</version>  <!-- v5.x.x is for production, v6.x.x EAP X DevAPI -->
             </dependency>
             <dependency>
                 <groupId>com.google.cloud.sql</groupId>
                 <artifactId>mysql-socket-factory</artifactId> <!-- mysql-socket-factory-connector-j-6 if using 6.x.x -->
-                <version>1.0.3</version>
+                <version>1.0.4</version>
             </dependency>
-
             <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
             <dependency>
                 <groupId>org.jsoup</groupId>
@@ -176,6 +208,12 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>1.18</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ai.api</groupId>
+                <artifactId>libai</artifactId>
+                <version>1.6.12</version>
             </dependency>
 
             <!-- https://mvnrepository.com/artifact/org.apache.poi/poi -->

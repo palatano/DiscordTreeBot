@@ -1,5 +1,6 @@
 package tree.db;
 
+//import com.mysql.jdbc.Connection;
 import javafx.util.Pair;
 import net.dv8tion.jda.core.entities.*;
 import tree.Config;
@@ -8,7 +9,8 @@ import tree.db.EntryInfo;
 import javax.swing.text.html.HTMLDocument;
 import javax.xml.crypto.Data;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Valued Customer on 9/17/2017.
@@ -18,6 +20,8 @@ public class DatabaseManager {
     private Connection conn;
 
     private DatabaseManager() {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
         String jdbcUrl = String.format(
                 "jdbc:mysql://google/%s?cloudSqlInstance=%s&"
                         + "socketFactory=com.google.cloud.sql.mysql.SocketFactory",
@@ -26,9 +30,9 @@ public class DatabaseManager {
         String username = Config.getDbUser();
         String password = Config.getDbPassword();
 
-        try {
+//        try {
             conn = DriverManager.getConnection(jdbcUrl, username, password);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -372,9 +376,6 @@ public class DatabaseManager {
         ps.executeUpdate();
     }
 
-    // guild: 123
-    // text_channels: 123, 345 id_channel, guild_id
-
     public boolean checkIfKeyExists(Guild guild, String tableName, String idLabel,
                                     long id, boolean isGuildTable) throws SQLException {
         PreparedStatement ps;
@@ -394,12 +395,141 @@ public class DatabaseManager {
         return rs.next();
     }
 
+    public boolean checkIfAllowed(Guild guild, String tableName, String idLabel,
+                                    long id, boolean isGuildTable) throws SQLException {
+        PreparedStatement ps, psEmpty;
+        if (isGuildTable) {
+            ps = conn.prepareStatement("SELECT " + idLabel + " FROM " +
+                    tableName + " WHERE " + idLabel + " = ? LIMIT 1");
+            ps.setLong(1, id);
+        } else {
+            psEmpty = conn.prepareStatement("SELECT * FROM guild."
+                    + tableName +
+                    " WHERE " + "guild_id = ?");
+            psEmpty.setLong(1, guild.getIdLong());
+            ResultSet rsEmpty = psEmpty.executeQuery();
+            if (!rsEmpty.next()) {
+                return true;
+            }
+
+            ps = conn.prepareStatement("SELECT " + idLabel +
+                    " FROM guild." + tableName +
+                    " WHERE " + idLabel + " = ?" +
+                    " AND guild_id = ?;");
+            ps.setLong(1, id);
+            ps.setLong(2, guild.getIdLong());
+        }
+        ResultSet rs = ps.executeQuery();
+        return rs.next();
+    }
+
     private static String removeLastComma(String toChange) {
         int lastCommaIndex = toChange.lastIndexOf(",");
         if (lastCommaIndex != -1) {
             return new StringBuilder(toChange).replace(lastCommaIndex, lastCommaIndex + 2, "").toString();
         }
         return toChange;
+    }
+
+    public boolean isAdmin(Guild guild, Member member) {
+        try {
+            if (!checkIfKeyExists(guild, "guilds", "guild_id", guild.getIdLong(), true)) {
+                initializeGuildData(guild);
+            }
+
+            return checkIfAllowed(guild, "admins", "admin_id", member.getUser().getIdLong(), false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isAllowedTextChannel(Guild guild, TextChannel textChannel) {
+        try {
+            System.out.println("Reached here");
+            if (!checkIfKeyExists(guild, "guilds", "guild_id", guild.getIdLong(), true)) {
+                System.out.println("Got here");
+                initializeGuildData(guild);
+            }
+
+            return checkIfAllowed(guild, "text_channels", "text_channel_id", textChannel.getIdLong(), false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isAllowedVoiceChannel(Guild guild, VoiceChannel voiceChannel) {
+        try {
+            if (!checkIfKeyExists(guild, "guilds", "guild_id", guild.getIdLong(), true)) {
+                initializeGuildData(guild);
+            }
+
+            return checkIfAllowed(guild, "voice_channels",
+                    "voice_channel_id", voiceChannel.getIdLong(), false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasMusicRole(Guild guild, Member member) {
+        PreparedStatement ps, psEmpty = null;
+        String tableName = "music_roles";
+        String query = "SELECT * FROM  " + tableName + " JOIN guilds" +
+                " ON guilds.guild_id = " + tableName + ".guild_id";
+        List<Role> roles = member.getRoles();
+
+        if (isAdmin(guild, member)) {
+            return true;
+        }
+        try {
+            if (!checkIfKeyExists(guild, "guilds", "guild_id", guild.getIdLong(), true)) {
+                initializeGuildData(guild);
+            }
+
+            psEmpty = conn.prepareStatement("SELECT * FROM guild."
+                    + tableName +
+                    " WHERE " + "guild_id = ?");
+            psEmpty.setLong(1, guild.getIdLong());
+            ResultSet rsEmpty = psEmpty.executeQuery();
+            if (!rsEmpty.next()) {
+                return true;
+            }
+
+            ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // We want to get the roles listed in the guild.
+                long roleId = rs.getLong("music_role_id");
+                Role role = guild.getRoleById(roleId);
+                if (roles.contains(role)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Role> getMusicRoles(Guild guild) {
+        PreparedStatement ps = null;
+        String tableName = "music_roles";
+        String query = "SELECT * FROM " + tableName + " WHERE guilds.guild_id = " + tableName + "guild.id";
+        List<Role> outList = new ArrayList<>();
+        try {
+            ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong("music_role_id");
+                Role role = guild.getRoleById(id);
+                outList.add(role);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return outList;
     }
 
 }

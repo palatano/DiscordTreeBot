@@ -25,7 +25,6 @@ public class GuildPermissionsCommand implements AnalysisCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        String permissions = Config.getPermissions(guild);
         String output = "";
         try {
             output = db.getGuildPermissions(guild);

@@ -2,15 +2,13 @@ package tree.command.voice;
 
 import net.dv8tion.jda.core.audio.AudioReceiveHandler;
 import net.dv8tion.jda.core.audio.AudioSendHandler;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.managers.AudioManager;
 import tree.command.util.MessageUtil;
 import tree.command.util.speech.AudioEchoHandler;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.VoiceCommand;
+import tree.db.DatabaseManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +23,7 @@ public class EchoCommand implements VoiceCommand {
     private String commandName;
     private AudioEchoHandler handler;
     private Map<Guild, EchoData> guildEchoDataMap;
+    private DatabaseManager db;
 
     class EchoData {
         private ScheduledExecutorService scheduler;
@@ -42,6 +41,7 @@ public class EchoCommand implements VoiceCommand {
         this.commandName = commandName;
         handler = new AudioEchoHandler();
         guildEchoDataMap = new HashMap<>();
+        db = DatabaseManager.getInstance();
     }
 
     private void addEchoData(Guild guild, AudioManager audioManager) {
@@ -54,7 +54,6 @@ public class EchoCommand implements VoiceCommand {
         audioManager.setSendingHandler(handler);
 
         ScheduledExecutorService scheduler = echoData.getScheduler();
-
         scheduler.schedule(() -> {
             audioManager.setReceivingHandler(lastAh);
             audioManager.setSendingHandler(lastSh);
@@ -70,15 +69,20 @@ public class EchoCommand implements VoiceCommand {
             return;
         }
 
-        AudioManager audioManager = guild.getAudioManager();
-        if (!audioManager.isConnected() || audioManager.isAttemptingToConnect()) {
-            if (!member.getVoiceState().inVoiceChannel()) {
-                MessageUtil.sendError("You must join a channel first.", msgChan);
-                return;
-            }
-            audioManager.openAudioConnection(member.getVoiceState().getChannel());
+        if (!member.getVoiceState().inVoiceChannel()) {
+            MessageUtil.sendError("You must be in a voice channel.", msgChan);
+            return;
         }
 
+        AudioManager audioManager = guild.getAudioManager();
+        VoiceChannel voiceChan = member.getVoiceState().getChannel();
+        if (!db.isAllowedVoiceChannel(guild, voiceChan)) {
+            MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
+            return;
+        }
+        audioManager.openAudioConnection(member.getVoiceState().getChannel());
+
+        msgChan.sendMessage("Speak into the microphone to hear the echo.").queue();
         addEchoData(guild, audioManager);
     }
 

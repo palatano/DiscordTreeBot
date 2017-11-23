@@ -15,10 +15,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import javafx.util.Pair;
-import net.dv8tion.jda.core.entities.Guild;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.VoiceChannel;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
@@ -111,10 +108,10 @@ public class AudioPlayerAdapter extends ListenerAdapter {
             @Override
             public void trackLoaded(AudioTrack track) {
                 if (writeToChannel) {
-                    channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``").queue(m -> m.addReaction("\uD83D\uDC4D").queue());
+                    channel.sendMessage("Adding to queue: ``" + track.getInfo().title + "``.").queue();
                 }
 
-                play(channel.getGuild(), musicManager, track, member);
+                play(channel.getGuild(), musicManager, track, member, channel);
             }
 
             @Override
@@ -125,10 +122,11 @@ public class AudioPlayerAdapter extends ListenerAdapter {
                     firstTrack = playlist.getTracks().get(0);
                 }
                 if (writeToChannel) {
-                    channel.sendMessage("Adding to queue: ``" + firstTrack.getInfo().title + "`` (first track of playlist ``" + playlist.getName() + "``)").queue();
+                    channel.sendMessage("Adding to queue: ``" + firstTrack.getInfo().title +
+                            "`` (first track of playlist ``" + playlist.getName() + "``).").queue();
                 }
 
-                play(channel.getGuild(), musicManager, firstTrack, member);
+                play(channel.getGuild(), musicManager, firstTrack, member, channel);
             }
 
             @Override
@@ -153,9 +151,10 @@ public class AudioPlayerAdapter extends ListenerAdapter {
      * @param musicManager
      * @param track
      */
-    public void play(Guild guild, GuildMusicManager musicManager, AudioTrack track, Member member) {
+    public void play(Guild guild, GuildMusicManager musicManager,
+                     AudioTrack track, Member member, MessageChannel msgChan) {
         connectToMusicChannel(guild.getAudioManager(), member);
-        musicManager.scheduler.queue(track, member);
+        musicManager.scheduler.queue(track, member, msgChan);
     }
 
     /**

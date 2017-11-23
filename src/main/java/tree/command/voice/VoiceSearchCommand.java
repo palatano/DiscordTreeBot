@@ -2,6 +2,7 @@ package tree.command.voice;
 
 import com.google.cloud.speech.v1.*;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import marytts.LocalMaryInterface;
 import marytts.MaryInterface;
@@ -38,6 +39,7 @@ import java.io.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class VoiceSearchCommand implements VoiceCommand {
@@ -50,14 +52,18 @@ public class VoiceSearchCommand implements VoiceCommand {
     private static RecognitionConfig config;
     private Map<Guild, Message> guildMessageMap;
     private Map<Guild, Boolean> guildVoiceStartedMap;
+    private Map<Guild, Integer> guildVoiceUsesMap;
+    private static final int MAX_VOICE_SEARCH_USES = 50;
 
     public VoiceSearchCommand(String commandName) {
         this.commandName = commandName;
         this.guildVoiceStartedMap = new HashMap<>();
+        this.guildVoiceUsesMap = new HashMap<>();
         handler = new AudioReceiveListener(1.0);
         guildMessageMap = new HashMap<>();
 
-        scheduler = Executors.newScheduledThreadPool(3);
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("Voice Search Thread Pool").build();
+        scheduler = Executors.newScheduledThreadPool(2, factory);
         try {
             marytts = new LocalMaryInterface();
         } catch (MaryConfigurationException e) {
@@ -78,6 +84,14 @@ public class VoiceSearchCommand implements VoiceCommand {
         }
     }
 
+    private boolean hitVoiceUsageLimit(Guild guild) {
+        if (!guildVoiceUsesMap.containsKey(guild)) {
+            guildVoiceUsesMap.put(guild, 1);
+            return false;
+        }
+        int usages = guildVoiceUsesMap.get(guild);
+        return usages > MAX_VOICE_SEARCH_USES;
+    }
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
@@ -88,6 +102,11 @@ public class VoiceSearchCommand implements VoiceCommand {
 
         if (!guild.getAudioManager().isConnected()) {
             MessageUtil.sendError("Bot is not connected to a voice channel.", msgChan);
+            return;
+        }
+
+        if (hitVoiceUsageLimit(guild)) {
+            MessageUtil.sendError("Too many usages for the day, please try again later.", msgChan);
             return;
         }
 
@@ -117,12 +136,18 @@ public class VoiceSearchCommand implements VoiceCommand {
     }
 
     private void search(Guild guild, MessageChannel msgChan, Member member) {
+        // Get the audio handler currently used for receiving and store it for later.
         AudioManager audioManager = guild.getAudioManager();
-
         AudioReceiveHandler lastAh = audioManager.getReceiveHandler();
         handler.reset();
-        audioManager.setReceivingHandler(handler);
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        audioManager.setReceivingHandler(handler);
         Message message = msgChan.sendMessage("Please say your question, up to 5 seconds.").complete();
         guildMessageMap.put(guild, message);
 
@@ -132,17 +157,13 @@ public class VoiceSearchCommand implements VoiceCommand {
                 writeToFile();
                 getResults(guild, msgChan, member);
                 guildVoiceStartedMap.remove(guild);
+                handler.reset();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
         };
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         scheduler.schedule(runnable,5, TimeUnit.SECONDS);
     }
 
@@ -227,6 +248,17 @@ public class VoiceSearchCommand implements VoiceCommand {
         speech = SpeechClient.create();
     }
 
+    private String getOSPath() {
+        String osName = Config.getOsName();
+        if (osName.indexOf("win") >= 0) {
+            return "discord-dau\\";
+        } else if (osName.indexOf("nux") >= 0){
+            return "";
+        } else {
+            return null;
+        }
+    }
+
     private void getAudioOutputResult(Guild guild, MessageChannel msgChan, Member member, String search) {
         try {
             MessageEmbed embed = getSearchResult(search, msgChan, member);
@@ -244,8 +276,7 @@ public class VoiceSearchCommand implements VoiceCommand {
                         audioOut.getFormat());
 
                 // Now, get lavaplayer to play it.
-
-                String filePath = Config.getFilePath() + "discord-dau\\" + fileName;
+                String filePath = Config.getFilePath() + getOSPath() + fileName;
                 AudioPlayerAdapter player = AudioPlayerAdapter.audioPlayerAdapter;
                 if (checkIfStillConnected(guild, member)) {
                     player.loadLocalAudio(filePath, member);
@@ -259,7 +290,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         }
     }
 
-    private  MessageEmbed getSearchResult(String search, MessageChannel msgChan, Member member) {
+    private MessageEmbed getSearchResult(String search, MessageChannel msgChan, Member member) {
         Message message = guildMessageMap.get(member.getGuild());
         message = message.editMessage("You are searching for: *" + search.trim() + "*").complete();
         guildMessageMap.put(member.getGuild(), message);
@@ -267,7 +298,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         try {
             url = new URIBuilder("http://www.google.com/search").addParameter("q", search).build();
             Elements links = Jsoup.connect(url.toString())
-                    .userAgent("Gnar")
+                    .userAgent("TreeBot")
                     .get()
                     .select(".g");
             if (links.isEmpty()) {

@@ -5,8 +5,6 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
 import org.jsoup.nodes.Element;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
@@ -18,7 +16,7 @@ import java.util.stream.Collectors;
 public class MenuSelectionInfo {
     private Message menu;
     private MessageChannel msgChan;
-    private List<? extends Object> songsToChoose;
+    private List<? extends Object> listOfChoices;
     private ScheduledFuture<?> task;
 
     public Message getMenu() {
@@ -29,26 +27,26 @@ public class MenuSelectionInfo {
         return msgChan;
     }
 
-    public List<?> getSongsToChoose() {
-        if (songsToChoose == null) {
+    public List<?> getListOfChoices() {
+        if (listOfChoices == null) {
             return null;
         }
-        if (!songsToChoose.isEmpty()) {
-            if (songsToChoose.get(0) instanceof String) {
-                return songsToChoose.stream()
+        if (!listOfChoices.isEmpty()) {
+            if (listOfChoices.get(0) instanceof String) {
+                return listOfChoices.stream()
                         .map(object -> Objects.toString(object, null))
                         .collect(Collectors.toList());
-            } else if (songsToChoose.get(0) instanceof Long) {
-                return songsToChoose.stream()
+            } else if (listOfChoices.get(0) instanceof Long) {
+                return listOfChoices.stream()
                         .map(object ->
                                 Long.parseLong(String.valueOf(object)))
                         .collect(Collectors.toList());
-            } else if (songsToChoose.get(0) instanceof SearchResult) {
-                return songsToChoose.stream()
+            } else if (listOfChoices.get(0) instanceof SearchResult) {
+                return listOfChoices.stream()
                         .map(SearchResult.class::cast)
                         .collect(Collectors.toList());
-            } else if (songsToChoose.get(0) instanceof Element) {
-                return songsToChoose.stream()
+            } else if (listOfChoices.get(0) instanceof Element) {
+                return listOfChoices.stream()
                         .map(Element.class::cast)
                         .collect(Collectors.toList());
             }
@@ -57,10 +55,10 @@ public class MenuSelectionInfo {
     }
 
     public MenuSelectionInfo(Message menu, MessageChannel msgChan,
-                             List<?> songsToChoose, ScheduledFuture<?> task) {
+                             List<?> listOfChoices, ScheduledFuture<?> task) {
         this.menu = menu;
         this.msgChan = msgChan;
-        this.songsToChoose = songsToChoose;
+        this.listOfChoices = listOfChoices;
         this.task = task;
     }
 

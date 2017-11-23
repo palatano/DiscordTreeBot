@@ -21,6 +21,7 @@ import tree.command.util.music.AudioPlayerAdapter;
 import tree.command.util.music.GuildMusicManager;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,11 +35,15 @@ import tree.Config;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.Command;
 import tree.commandutil.util.CommandRegistry;
+import tree.db.DatabaseManager;
+
+import javax.xml.crypto.Data;
 
 /**
  * Created by Valued Customer on 8/15/2017.
  */
 public class YoutubeMusicUtil {
+    private static DatabaseManager dbManager = DatabaseManager.getInstance();
     private static YoutubeMusicUtil ytUtil = new YoutubeMusicUtil();
     private AudioPlayerAdapter audioPlayer;
     private YouTube youtube;
@@ -121,7 +126,7 @@ public class YoutubeMusicUtil {
                 }
             }
 
-            messageString += "\nClick a reaction to choose, or cancel with :x:.";
+            messageString += "\nChoose a reaction. Not this one? Type ``;cnl`` or search again. ";
             menuWrapper.setMessage(msgChan.sendMessage(messageString).complete());
         } catch (GoogleJsonResponseException e) {
             System.err.println("There was a service error: " + e.getDetails().getCode() + " : "
@@ -143,7 +148,7 @@ public class YoutubeMusicUtil {
     }
 
     public boolean authorizedUser(Guild guild, Member member) {
-        return Config.hasMusicRole(guild, member);
+            return dbManager.hasMusicRole(guild, member);
     }
 
     public String getSongURL(int i, MessageChannel msgChan, List<String> songsToChoose) {
@@ -172,15 +177,7 @@ public class YoutubeMusicUtil {
 
     public void addSong(Guild guild, MessageChannel msgChan,
                          String commandName, Member member, String song) {
-        AudioManager audioManager = guild.getAudioManager();
-        if (!audioManager.isConnected() || !audioManager.isAttemptingToConnect()) {
-            guild.getAudioManager().openAudioConnection(member.getVoiceState().getChannel());
-        }
-        GuildMusicManager musicManager = AudioPlayerAdapter.audioPlayerAdapter
-                .getGuildAudioPlayer(guild);
-        musicManager.player.setPaused(false);
         audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member, true);
-
     }
 
     /**

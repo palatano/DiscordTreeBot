@@ -8,3 +8,8 @@ logs
 dependency-reduced-pom.xml
 target
 target/*
+in.raw
+out.wav
+final.wav
+ffmpeg.exe
+etc/*

@@ -1,7 +1,6 @@
 package tree.command.analysis;
 
 import net.dv8tion.jda.core.entities.*;
-import tree.Config;
 import tree.command.data.permsdata.GuildPerm;
 import tree.command.data.MenuSelectionInfo;
 import tree.command.data.permsdata.SetPermissionsVisitor;
@@ -84,18 +83,6 @@ public class SetCommand implements AnalysisCommand {
         return out.trim();
     }
 
-    private boolean isAdmin(long guildId, Member member) {
-        long userId = member.getUser().getIdLong();
-        if (Config.isOwner(userId) || member.isOwner()) {
-            return true;
-        }
-        if (Config.guildAdmins.containsKey(guildId) &&
-                Config.guildAdmins.get(guildId)
-                        .contains(member.getUser().getIdLong())) {
-            return true;
-        }
-        return false;
-    }
     private Map<Long, Member> createMemberMap(Guild guild, String search) {
         List<Member> memberListEffective = guild.getMembersByEffectiveName(search, true);
         List<Member> memberListUser = guild.getMembersByName(search, true);
@@ -186,7 +173,7 @@ public class SetCommand implements AnalysisCommand {
 
     private long getIdToSet(Guild guild, MessageChannel msgChan, long userId, int choice) {
         List<Long> list = null;
-        list = (List<Long>) guildToUserMap.get(guild).get(userId).getSongsToChoose();
+        list = (List<Long>) guildToUserMap.get(guild).get(userId).getListOfChoices();
         if (choice < 1 || choice >= list.size() + 1) {
             MessageUtil.sendError("Enter a valid number from the list.", msgChan);
             return -1;
@@ -200,7 +187,7 @@ public class SetCommand implements AnalysisCommand {
         checkIfGuildExists(guild);
 
         // Before using the set command, check if the guild exists and the user is an admin.
-        if (!Config.isAdmin(guild, member)) {
+        if (!db.isAdmin(guild, member)) {
             message.addReaction("\u274E").queue();
             return;
         }

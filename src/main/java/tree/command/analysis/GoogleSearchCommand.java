@@ -1,8 +1,8 @@
 package tree.command.analysis;
 
-import com.google.api.services.youtube.model.SearchResult;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
+import org.apache.http.client.utils.URIBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,17 +18,10 @@ import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
 import java.io.*;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 
-import com.google.gson.Gson;
 import tree.util.LoggerUtil;
-
-import javax.print.Doc;
-import javax.xml.ws.http.HTTPException;
 
 /**
  * Created by Valued Customer on 8/2/2017.
@@ -136,24 +129,38 @@ public class GoogleSearchCommand implements AnalysisCommand {
 
     }
 
-    String getMetaTag(Document document, String attr) {
-        Elements elements = document.select("meta[name=" + attr + "]");
-        for (Element element : elements) {
-            final String s = element.attr("content");
-            if (s != null) return s;
-        }
-        elements = document.select("meta[property=" + attr + "]");
-        for (Element element : elements) {
-            final String s = element.attr("content");
-            if (s != null) return s;
-        }
+    private MessageEmbed getSearchResult(List<Element> links,  String search, MessageChannel msgChan, Member member) {
+        URI url = null;
+//            url = new URIBuilder("http://www.google.com/search").addParameter("q", search).build();
+//            Elements links = Jsoup.connect(url.toString())
+//                    .userAgent("TreeBot")
+//                    .get()
+//                    .select(".g");
+//            if (links.isEmpty()) {
+//                MessageUtil.sendError("No search results found.", msgChan);
+//                return null;
+//            }
+
         return null;
     }
 
-
+    /**
+     * In this method, we want to extract the next SearchResult from the list of search results,
+     * so that we can send it as an embed.
+     *
+     * @param guild
+     * @param member
+     * @param msgChan
+     * @param msgWrapper
+     * @param hasNextOption
+     * @return
+     * @throws Exception
+     */
     private List<Element> getNextResult(Guild guild, Member member, MessageChannel msgChan,
                                        MessageWrapper msgWrapper, boolean hasNextOption) throws Exception {
 
+        // First, we want to get the userId and get the corresponding info from the guildUserMap,
+        // as well as the current resultIndex, or the current search result in the list of search results.
         long userId = member.getUser().getIdLong();
         MenuSelectionInfo msInfo = guildToUserMap.get(guild).get(userId);
         long resultIndex = guildToIndexMap.get(guild).get(userId);
@@ -161,8 +168,10 @@ public class GoogleSearchCommand implements AnalysisCommand {
             return null;
         }
 
+        // We want to get the list and then check if its empty, informing the
+        // user if so.
         List<Element> searchResultList =
-                (List<Element>) msInfo.getSongsToChoose();
+                (List<Element>) msInfo.getListOfChoices();
 
         if (searchResultList.isEmpty()) {
             System.out.println("No more results found.");
@@ -170,48 +179,38 @@ public class GoogleSearchCommand implements AnalysisCommand {
             return null;
         }
 
-        EmbedBuilder embed = new EmbedBuilder();
-        Iterator<Element> searchResultIterator = searchResultList.iterator();
-        int index = 0;
-
         msgChan.sendTyping().queue();
-        while (searchResultIterator.hasNext()) {
-            Element link = searchResultIterator.next();
+
+        // add method for getting that next result.
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setAuthor("", "https://www.google.com/", "https://www.google.com/favicon.ico");
+
+        // After that, we will iterate down the list, getting the next valid search result/
+        List<Element> links = searchResultList;
+        int index = 0;
+        for (Element link : links) {
             index++;
-            // Google returns URLs in format "http://www.google.com/url?q=<url>&sa=U&ei=<someKey>".
-
-            String title = link.text();
-            String url = link.absUrl("href");
-
-
-            url = URLDecoder.decode(url.substring(url.indexOf('=') + 1, url.indexOf('&')), "UTF-8");
-            if (!url.startsWith("http")) {
+            Elements list = link.select(".r>a");
+            if (list.isEmpty()) {
                 continue;
             }
-            URLConnection urlCon = new URL(url).openConnection();
-            urlCon.setRequestProperty("User-Agent", userAgent);
-            urlCon.connect();
-
-            try {
-                InputStream is = urlCon.getInputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-                continue;
+            Element entry = list.first();
+            String title = entry.text();
+            String resultUrl = entry.absUrl("href").replace(")", "\\)");
+            String description = null;
+            Elements st = link.select(".st");
+            if (!st.isEmpty()) {
+                description = st.first().text();
+                if (description.isEmpty()) {
+                    continue;
+                }
             }
-            String redirLink = urlCon.getURL().toString();
-
-            Document doc = Jsoup.connect(redirLink).ignoreContentType(true).get();
-            List<Element> list = doc.select("meta[name=description]");
-
-            String description = list.size() == 0 ? doc.title() : list.get(0).attr("content");
-
-            description = description.length() > 512 ? description.substring(0, 512) + "..." : description;
-            embed.setDescription(++resultIndex + ") " +
-                    "[" + title + "](" + redirLink + ")\n\n**Description:** " + description + "");
+            embed.setDescription("**[" + title + "](" + resultUrl + ")**\n" + description);
             break;
         }
 
-        if (!searchResultIterator.hasNext()) {
+        // If the index is equal to the size, then we have no more search results.
+        if (index == links.size()) {
             return null;
         }
 
@@ -221,9 +220,11 @@ public class GoogleSearchCommand implements AnalysisCommand {
         }
         msgWrapper.setMessage(msg);
 
-
         return searchResultList.subList(index, searchResultList.size());
     }
+
+
+
 
     private void performSearchQuery(Guild guild, MessageChannel msgChan,
                                     Message message, Member member, String search) {
@@ -232,19 +233,23 @@ public class GoogleSearchCommand implements AnalysisCommand {
         String charset = "UTF-8";
         userAgent = "TreeBot";
 
+        URI url = null;
         try {
-            Elements links = Jsoup.connect(google +
-                    URLEncoder.encode(search, charset) + "&safe=on")
-                    .userAgent(userAgent)
+            url = new URIBuilder("http://www.google.com/search")
+                    .addParameter("q", search)
+                    .addParameter("safe", "on")
+                    .build();
+            Elements links = Jsoup.connect(url.toString())
+                    .userAgent("TreeBot")
                     .get()
-                    .select(".g>.r>a");
-
-            List<Element> elementsList = new ArrayList<>();
-            for (Element link : links) {
-                elementsList.add(link);
+                    .select(".g");
+            if (links.isEmpty()) {
+                MessageUtil.sendError("No search results found.", msgChan);
+                return;
             }
 
-
+            List<Element> elementsList = new ArrayList<>();
+            elementsList.addAll(links);
 
             MessageWrapper msgWrapper = new MessageWrapper();
 
@@ -276,7 +281,6 @@ public class GoogleSearchCommand implements AnalysisCommand {
             e.printStackTrace();
             return;
         }
-//        msgChan.sendMessage(embed.build()).queue();
     }
 
     private String getQuery(String[] args) {

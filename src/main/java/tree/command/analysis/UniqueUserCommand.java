@@ -8,7 +8,6 @@ import tree.command.data.SerializableMessageHistory;
 import tree.command.util.DataUtil;
 
 //import org.apache.commons.lang3.SerializationUtils;
-import org.apache.commons.*;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.AnalysisCommand;
 
@@ -23,19 +22,16 @@ import java.util.Map;
  */
 public class UniqueUserCommand implements AnalysisCommand {
     private String commandName;
-    private static final long[] channelList = {249764885246902272L, 247929469552033792L,
-    269577202016845824L, 247135478069854209L, 247248468626636800L, 248243893273886720L,
-    247134894558281730L};
-    Map<String, String> userMap;
-    DataUtil dataUtil;
-    SerializableMessageHistory msgHistory;
-    Stopwatch stopwatch;
+    private Map<String, String> userMap;
+    private DataUtil dataUtil;
+    private SerializableMessageHistory msgHistory;
+    private Stopwatch stopwatch;
     private Calendar cal;
 
     public UniqueUserCommand(String commandName) {
         this.commandName = commandName;
         userMap = new HashMap<>();
-        this.dataUtil = new DataUtil();
+        this.dataUtil = DataUtil.getInstance();
         msgHistory = null;
     }
 
@@ -152,13 +148,14 @@ public class UniqueUserCommand implements AnalysisCommand {
         if (!MessageUtil.getCheckIfValidDate(message.getContent())) {
             return;
         }
-        for (long channelID : channelList) {
+        for (TextChannel channel : guild.getTextChannels()) {
+            long channelID = channel.getIdLong();
             MessageChannel messageChannel = guild.getTextChannelById(channelID);
             getDailyHistory(messageChannel, message.getContent(), false);
             dataUtil.writeChannelDataExcel(messageChannel.getName(), cal, false, msgChan);
         }
         dataUtil.writeAllChannelDataExcel(msgChan);
-//        guild.getJDA().get
+
     }
 
     @Override

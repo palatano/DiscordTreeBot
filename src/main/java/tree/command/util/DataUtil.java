@@ -20,16 +20,21 @@ import java.io.*;
  * Created by Valued Customer on 7/21/2017.
  */
 public class DataUtil {
+    private static DataUtil dataUtil = new DataUtil();
     private Map<String, MemberData> uniqueUsersSingleChannelMap;
     private Map<String, Map> uniqueUsersAllChannelsMap;
     private Yaml yaml;
     private ExcelUtil excelUtil;
     private String currDate;
 
-    public DataUtil() {
+    private DataUtil() {
         uniqueUsersSingleChannelMap = new HashMap<>();
         uniqueUsersAllChannelsMap = new HashMap<>();
         yaml = new Yaml();
+    }
+
+    public static DataUtil getInstance() {
+        return dataUtil;
     }
 
     public void resetMap() {
@@ -175,6 +180,7 @@ public class DataUtil {
             e.printStackTrace();
         }
     }
+
 
 
 

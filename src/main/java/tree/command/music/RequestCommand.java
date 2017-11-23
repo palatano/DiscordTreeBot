@@ -1,11 +1,8 @@
 package tree.command.music;
 
-import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
-import net.dv8tion.jda.core.entities.impl.MessageImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tree.Config;
 import tree.command.data.MenuSelectionInfo;
 import tree.command.data.MessageWrapper;
 import tree.command.data.ReactionMenu;
@@ -13,20 +10,19 @@ import tree.command.util.MessageUtil;
 import tree.command.util.api.YoutubeMusicUtil;
 import tree.commandutil.CommandManager;
 import tree.commandutil.type.MusicCommand;
+import tree.db.DatabaseManager;
 import tree.util.LoggerUtil;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by Valued Customer on 8/15/2017.
  */
 public class RequestCommand implements MusicCommand {
+    private DatabaseManager db = DatabaseManager.getInstance();
     private String commandName;
     private YoutubeMusicUtil ytUtil;
     private static Logger logger = LoggerFactory.getLogger(AddCommand.class);
@@ -82,16 +78,16 @@ public class RequestCommand implements MusicCommand {
 
         MenuSelectionInfo msInfo = userChannelMap.get(userId);
         String url = ytUtil.getSongURL(option, msgChan,
-                (List<String>) msInfo.getSongsToChoose());
+                (List<String>) msInfo.getListOfChoices());
 
         guildSongConfirmationMap.get(guild).put(userId, url);
         reset(guild, userId);
 
         // Create the menu for confirmation.
-        Iterator<Long> iter = Config.getGuildAdmins().get(guild.getIdLong()).iterator();
+        Iterator<Role> iter = db.getMusicRoles(guild).iterator();
         String confirmationString = "";
         if (iter.hasNext()) {
-            confirmationString += "**" + guild.getRoleById(iter.next()).getName() + ":** ";
+            confirmationString += "**" + iter.next().getName() + ":** ";
         } else {
             confirmationString += "**Authorized Users:** ";
         }
@@ -100,7 +96,7 @@ public class RequestCommand implements MusicCommand {
         Message menu = msgChan.sendMessage(confirmationString).complete();
         menu.addReaction("\u2611").queue();
         MenuSelectionInfo newMsInfo =
-                new MenuSelectionInfo(menu, msgChan, msInfo.getSongsToChoose(), msInfo.getTask());
+                new MenuSelectionInfo(menu, msgChan, msInfo.getListOfChoices(), msInfo.getTask());
         addSelectionEntry(guild, userId, newMsInfo);
 
         ReactionMenu reactionMenu = new ReactionMenu(commandName, userId, msgChan);
@@ -174,7 +170,7 @@ public class RequestCommand implements MusicCommand {
         }
 
         VoiceChannel voiceChan = member.getVoiceState().getChannel();
-        if (!Config.isAllowedVoiceChannel(guild, voiceChan.getIdLong())) {
+        if (!db.isAllowedVoiceChannel(guild, voiceChan)) {
             MessageUtil.sendError("I'm not allowed to join that channel!", msgChan);
             return;
         }

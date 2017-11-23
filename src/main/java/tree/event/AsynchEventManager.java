@@ -1,5 +1,6 @@
 package tree.event;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.hooks.EventListener;
 import net.dv8tion.jda.core.hooks.IEventManager;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by Valued Customer on 8/23/2017.
@@ -19,7 +21,8 @@ public class AsynchEventManager implements IEventManager {
     private ExecutorService threadPool;
 
     public AsynchEventManager() {
-        threadPool = Executors.newFixedThreadPool(50);
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("Main Worker Thread Pool").build();
+        threadPool = Executors.newFixedThreadPool(25, factory);
     }
 
 
