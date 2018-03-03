@@ -13,3 +13,5 @@ out.wav
 final.wav
 ffmpeg.exe
 etc/*
+creds.yaml
+TreeBot-44f19ab8754d.json
