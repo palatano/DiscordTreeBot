@@ -218,7 +218,7 @@ public class MessageUtil {
             s = String.format("[Chan: %s] %s: %s",
                     msg.getTextChannel().getName(),
                     msg.getMember().getEffectiveName(),
-                    msg.getContent());
+                    msg.getContentRaw());
         } catch (NullPointerException npe) {
             System.out.println("User is banned or left. Skipping...");
         }

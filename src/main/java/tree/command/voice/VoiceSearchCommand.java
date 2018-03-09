@@ -57,7 +57,7 @@ public class VoiceSearchCommand implements VoiceCommand {
 
     public VoiceSearchCommand(String commandName) {
         this.commandName = commandName;
-        this.guildVoiceStartedMap = new HashMap<>();
+        /*this.guildVoiceStartedMap = new HashMap<>();
         this.guildVoiceUsesMap = new HashMap<>();
         handler = new AudioReceiveListener(1.0);
         guildMessageMap = new HashMap<>();
@@ -81,7 +81,7 @@ public class VoiceSearchCommand implements VoiceCommand {
             speech = SpeechClient.create();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private boolean hitVoiceUsageLimit(Guild guild) {
@@ -94,8 +94,9 @@ public class VoiceSearchCommand implements VoiceCommand {
     }
 
     @Override
+    @Deprecated
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        if (guildVoiceStartedMap.containsKey(guild)) {
+        /*if (guildVoiceStartedMap.containsKey(guild)) {
             MessageUtil.sendError("Voice search is already being used.", msgChan);
             return;
         }
@@ -111,7 +112,7 @@ public class VoiceSearchCommand implements VoiceCommand {
         }
 
         guildVoiceStartedMap.put(guild, true);
-        search(guild, msgChan, member);
+        search(guild, msgChan, member);*/
     }
 
     @Override

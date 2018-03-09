@@ -205,7 +205,6 @@ public class AddCommand implements MusicCommand {
             addSelectionEntry(guild, member.getUser().getIdLong(),
                     msInfo);
 
-
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.util.List;
  */
 public class BroadcastCommand implements TextCommand {
     private String commandName;
+    private static final long[] blacklistedChannels = {110373943822540800L, 125227483518861312L};
 
     public BroadcastCommand(String commandName) {
         this.commandName = commandName;
@@ -24,6 +25,15 @@ public class BroadcastCommand implements TextCommand {
         return out.trim();
     }
 
+    private boolean isBlacklisted(long id) {
+        for (long channelId : blacklistedChannels) {
+            if (id == channelId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
         String msgToSend = getMessage(args);
@@ -31,6 +41,10 @@ public class BroadcastCommand implements TextCommand {
         JDA jda = guild.getJDA();
         List<Guild> guilds = jda.getGuilds();
         for (Guild g : guilds) {
+            if (isBlacklisted(g.getIdLong())) {
+                continue;
+            }
+
             List<TextChannel> channels = g.getTextChannels();
             for (TextChannel channel : channels) {
                 if (channel.canTalk()) {

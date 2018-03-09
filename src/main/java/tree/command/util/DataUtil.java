@@ -51,7 +51,7 @@ public class DataUtil {
     public void putUniqueUser(Message msg, MessageChannel msgChan) {
         String user = msg.getAuthor().getName();
         if (!uniqueUsersSingleChannelMap.containsKey(user)) {
-            MemberData memData = new MemberData(MessageUtil.timeStamp(msg), msg.getContent(),
+            MemberData memData = new MemberData(MessageUtil.timeStamp(msg), msg.getContentRaw(),
                     msg.getAuthor().getName(), msg.getMember().getNickname());
             uniqueUsersSingleChannelMap.put(user, memData);
         }

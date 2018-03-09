@@ -19,7 +19,6 @@ import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
-import net.dv8tion.jda.core.utils.SimpleLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tree.TreeMain;
@@ -103,6 +102,7 @@ public class AudioPlayerAdapter extends ListenerAdapter {
      */
     public void loadAndPlay(final TextChannel channel, final String trackUrl, Member member, boolean writeToChannel) {
         GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
+        connectToMusicChannel(channel.getGuild().getAudioManager(), member);
 
         playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             @Override

@@ -34,23 +34,32 @@ public class CommandManager {
         CommandRegistry.setCommandRegistry();
     }
 
-    private static boolean isMainUser(User user) {
-        String name = user.getId();
-        return name.equals("192372494202568706");
+    private static boolean isBotOwner(User user, Guild guild) {
+        long serverOwnerId = guild.getOwner().getUser().getIdLong();
+        long name = user.getIdLong();
+        return name == serverOwnerId;
     }
 
-    private static boolean userUsingAdmin(Command command, Message message) {
+    private static boolean userUsingOwner(Command command, Message message) {
         for (String ownerCommand : ownerCommands) {
-            if (command.getCommandName().equals(ownerCommand) && !Config.isOwner(message.getAuthor().getIdLong())) {
+            if (command.getCommandName().equals(ownerCommand) &&
+                    !Config.isOwner(message.getAuthor().getIdLong())) {
                 System.out.println(message.getAuthor() +
-                        " tried to enter an owner command at " +
+                        " tried to enter a bot owner command at " +
                         MessageUtil.timeStamp(message));
                 return true;
             }
         }
 
+        return false;
+    }
+
+    private static boolean userUsingAdmin(Command command, Message message) {
+        // Check if the user is a server owner OR bot owner.
+
         for (String adminCommand : adminCommands) {
-            if (command.getCommandName().equals(adminCommand) && !isMainUser(message.getAuthor())) {
+            if (command.getCommandName().equals(adminCommand) &&
+                    !isBotOwner(message.getAuthor(), message.getGuild())) {
                 System.out.println(message.getAuthor() +
                         " tried to enter an admin command at " +
                         MessageUtil.timeStamp(message));
@@ -61,7 +70,7 @@ public class CommandManager {
     }
 
     public static boolean messageCommand(Message message) {
-        String msgText = message.getContent();
+        String msgText = message.getContentRaw();
         String[] args = CommandParser.parseMessage(msgText);
 
         if (args == null) {
@@ -74,8 +83,11 @@ public class CommandManager {
             LoggerUtil.logMessage(log, message, "Error retrieving command from the list.");
             return false;
         }
+
+        // Ensure that the user is not trying to use a bot owner command.
+
         // Ensure that the user doesnt use an admin command.
-        if (userUsingAdmin(command, message)) {
+        if (userUsingAdmin(command, message) || userUsingOwner(command, message)) {
             return false;
         }
 

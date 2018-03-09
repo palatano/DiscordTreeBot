@@ -189,7 +189,7 @@ public class TreeListener extends ListenerAdapter {
         }
 
         Message msg = event.getMessage();
-        if (!msg.getContent().startsWith(";")) {
+        if (!msg.getContentRaw().startsWith(";")) {
             return;
         }
 

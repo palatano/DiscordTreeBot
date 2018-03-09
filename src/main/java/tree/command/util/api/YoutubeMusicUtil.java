@@ -177,6 +177,7 @@ public class YoutubeMusicUtil {
 
     public void addSong(Guild guild, MessageChannel msgChan,
                          String commandName, Member member, String song) {
+
         audioPlayer.loadAndPlay(guild.getTextChannelById(msgChan.getIdLong()), song, member, true);
     }
 

@@ -22,16 +22,11 @@ public class DatabaseManager {
     private DatabaseManager() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-        String jdbcUrl = String.format(
-                "jdbc:mysql://google/%s?cloudSqlInstance=%s&"
-                        + "socketFactory=com.google.cloud.sql.mysql.SocketFactory",
-                "guild",
-                "treebot-175716:us-central1:treebot-1650045");
-        String username = Config.getDbUser();
-        String password = Config.getDbPassword();
 
-//        try {
-            conn = DriverManager.getConnection(jdbcUrl, username, password);
+            String username = Config.getDbUser();
+            String password = Config.getDbPassword();
+
+            conn = DriverManager.getConnection("jdbc:mysql://treebot-sql.cxf0hudqqiq9.us-east-2.rds.amazonaws.com:3307/treebot", username, password);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -40,22 +35,22 @@ public class DatabaseManager {
     private String adminDataToString(String table, String permissionString, ResultSet rs) throws SQLException{
 
         // Let's do something for admins only.
-        List<EntryInfo> entryList2 = getTableColumnLabels(table, conn);
-        if (table.equals("admins")) {
-            while (rs.next()) {
-                String name = "";
-                String nickName = "";
-                String disc = "";
-                for (EntryInfo entry : entryList2) {
-                    String columnLabel = entry.getColumnLabel();
-                    int type = entry.getType();
-                    if (type == Types.VARCHAR && columnLabel.equals("admin_name")) {
-                        name = rs.getString(columnLabel);
-                    } else if (type == Types.VARCHAR && columnLabel.equals("admin_nickname")) {
-                        nickName = rs.getString(columnLabel);
-                    } else if (type == Types.INTEGER && columnLabel.equals("admin_disc")) {
-                        int discriminator = rs.getInt("admin_disc");
-                        disc = String.valueOf(discriminator);
+                                List<EntryInfo> entryList2 = getTableColumnLabels(table, conn);
+                        if (table.equals("admins")) {
+                            while (rs.next()) {
+                                String name = "";
+                                String nickName = "";
+                                String disc = "";
+                                for (EntryInfo entry : entryList2) {
+                                    String columnLabel = entry.getColumnLabel();
+                                    int type = entry.getType();
+                                    if (type == Types.VARCHAR && columnLabel.equals("admin_name")) {
+                                        name = rs.getString(columnLabel);
+                                    } else if (type == Types.VARCHAR && columnLabel.equals("admin_nickname")) {
+                                        nickName = rs.getString(columnLabel);
+                                    } else if (type == Types.INTEGER && columnLabel.equals("admin_disc")) {
+                                        int discriminator = rs.getInt("admin_disc");
+                                        disc = String.valueOf(discriminator);
                     }
                 }
                 permissionString += nickName == null ?
@@ -385,7 +380,7 @@ public class DatabaseManager {
             ps.setLong(1, id);
         } else {
             ps = conn.prepareStatement("SELECT " + idLabel +
-                    " FROM guild." + tableName +
+                    " FROM " + tableName +
                     " WHERE " + idLabel + " = ?" +
                     " AND guild_id = ?;");
             ps.setLong(1, id);
@@ -403,7 +398,7 @@ public class DatabaseManager {
                     tableName + " WHERE " + idLabel + " = ? LIMIT 1");
             ps.setLong(1, id);
         } else {
-            psEmpty = conn.prepareStatement("SELECT * FROM guild."
+            psEmpty = conn.prepareStatement("SELECT * FROM "
                     + tableName +
                     " WHERE " + "guild_id = ?");
             psEmpty.setLong(1, guild.getIdLong());
@@ -413,7 +408,7 @@ public class DatabaseManager {
             }
 
             ps = conn.prepareStatement("SELECT " + idLabel +
-                    " FROM guild." + tableName +
+                    " FROM " + tableName +
                     " WHERE " + idLabel + " = ?" +
                     " AND guild_id = ?;");
             ps.setLong(1, id);
@@ -488,7 +483,7 @@ public class DatabaseManager {
                 initializeGuildData(guild);
             }
 
-            psEmpty = conn.prepareStatement("SELECT * FROM guild."
+            psEmpty = conn.prepareStatement("SELECT * FROM "
                     + tableName +
                     " WHERE " + "guild_id = ?");
             psEmpty.setLong(1, guild.getIdLong());

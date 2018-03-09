@@ -145,13 +145,13 @@ public class UniqueUserCommand implements AnalysisCommand {
 
     @Override
     public void execute(Guild guild, MessageChannel msgChan, Message message, Member member, String[] args) {
-        if (!MessageUtil.getCheckIfValidDate(message.getContent())) {
+        if (!MessageUtil.getCheckIfValidDate(message.getContentRaw())) {
             return;
         }
         for (TextChannel channel : guild.getTextChannels()) {
             long channelID = channel.getIdLong();
             MessageChannel messageChannel = guild.getTextChannelById(channelID);
-            getDailyHistory(messageChannel, message.getContent(), false);
+            getDailyHistory(messageChannel, message.getContentRaw(), false);
             dataUtil.writeChannelDataExcel(messageChannel.getName(), cal, false, msgChan);
         }
         dataUtil.writeAllChannelDataExcel(msgChan);
